@@ -12,7 +12,6 @@
       text-align: center;
       padding: 30px;
     }
-
     .card {
       max-width: 450px;
       margin: auto;
@@ -20,38 +19,136 @@
       border-radius: 20px;
       padding: 25px;
     }
-
     h1 {
       color: #ff7de9;
+      font-size: 34px;
     }
-
-    .price {
-      font-size: 42px;
+    .title {
+      font-size: 28px;
       font-weight: bold;
       margin: 20px 0;
     }
-
+    .price {
+      font-size: 44px;
+      font-weight: bold;
+      margin: 24px 0;
+    }
     .detail {
       font-size: 18px;
       margin: 10px 0;
+    }
+    .status {
+      margin-top: 20px;
+      opacity: .85;
     }
   </style>
 </head>
 
 <body>
-
-<div class="card">
-  <h1>🟣 Chasing Ditto</h1>
-
-  <div class="detail">
-    Website is working!
+  <div class="card" id="card">
+    <h1>🟣 Chasing Ditto</h1>
+    <div class="detail">Loading card...</div>
   </div>
 
-  <div class="detail">
-    Ditto approves.
-  </div>
+<script>
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUi84oLcNg92VgZF5o5Jupuw2BVyHytMCCK5puCOvbXNyzKSJur1UWfW0ADo2t2VTbQ0dWSXTbyZAy/pub?gid=629495162&single=true&output=csv";
 
-</div>
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && insideQuotes && next === '"') {
+      cell += '"';
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+        row = [];
+        cell = "";
+      }
+    } else {
+      cell += char;
+    }
+  }
+
+  if (cell || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+async function loadCard() {
+  const id = getParam("id");
+  const box = document.getElementById("card");
+
+  if (!id) {
+    box.innerHTML = `
+      <h1>🟣 Chasing Ditto</h1>
+      <div class="detail">No Ditto ID provided.</div>
+    `;
+    return;
+  }
+
+  const response = await fetch(csvUrl);
+  const text = await response.text();
+  const data = parseCSV(text);
+  const headers = data[0];
+
+  const idCol = headers.indexOf("Ditto ID");
+  const nameCol = headers.indexOf("Product Name");
+  const setCol = headers.indexOf("Set");
+  const numberCol = headers.indexOf("Card Number");
+  const gradeCol = headers.indexOf("Grade");
+  const conditionCol = headers.indexOf("Condition");
+  const priceCol = headers.indexOf("Display Price");
+  const statusCol = headers.indexOf("Status");
+
+  const card = data.find((row, index) => index > 0 && row[idCol] === id);
+
+  if (!card) {
+    box.innerHTML = `
+      <h1>🟣 Chasing Ditto</h1>
+      <div class="detail">Card not found.</div>
+      <div class="detail">${id}</div>
+    `;
+    return;
+  }
+
+  const condition =
+    card[gradeCol] && card[gradeCol] !== "Ungraded"
+      ? card[gradeCol]
+      : card[conditionCol];
+
+  box.innerHTML = `
+    <h1>🟣 Chasing Ditto</h1>
+    <div class="title">${card[nameCol]}</div>
+    <div class="detail">${card[setCol]} ${card[numberCol] || ""}</div>
+    <div class="detail">Condition: ${condition}</div>
+    <div class="price">$${card[priceCol]}</div>
+    <div class="status">${card[statusCol]}</div>
+  `;
+}
+
+loadCard();
+</script>
 
 </body>
 </html>
