@@ -136,6 +136,9 @@ async function loadCard() {
 
     const price = card[displayCol] || card[marketCol] || "Ask";
     const status = card[statusCol] || "Unknown";
+    const grade = gradeCol !== -1 ? card[gradeCol] : "";
+    const gradingCompany = gradingCompanyCol !== -1 ? card[gradingCompanyCol] : "";
+    const gradeText = grade ? `${gradingCompany ? gradingCompany + " " : ""}${grade}` : "";
 
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
