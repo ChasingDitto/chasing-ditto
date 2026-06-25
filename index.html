@@ -145,6 +145,7 @@ async function loadCard() {
       <div class="name">${card[nameCol] || "Unnamed Card"}</div>
       <div class="detail">${card[setCol] || ""}</div>
       <div class="detail">${card[conditionCol] || ""}</div>
+      ${gradeText ? `<div class="detail">${gradeText}</div>` : ""}
       <div class="price">$${price}</div>
       <div class="status">${status}</div>
     `;
