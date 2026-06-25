@@ -51,128 +51,124 @@
   </div>
 
 <script>
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
-function getParam(name) {
-  return new URLSearchParams(window.location.search).get(name);
-}
+  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let insideQuotes = false;
 
-    if (char === '"' && insideQuotes && next === '"') {
-      cell += '"';
-      i++;
-    } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      row.push(cell);
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (cell || row.length) {
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      if (char === '"') {
+        if (insideQuotes && text[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (char === "," && !insideQuotes) {
         row.push(cell);
-        rows.push(row);
-        row = [];
         cell = "";
+      } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+        if (cell || row.length) {
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        }
+      } else {
+        cell += char;
       }
-    } else {
-      cell += char;
-    }
-  }
-
-  if (cell || row.length) {
-    row.push(cell);
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-async function loadCard() {
-  const id = getParam("id");
-  const box = document.getElementById("card");
-
-  if (!id) {
-    box.innerHTML = `
-      <h1>🟣 Chasing Ditto</h1>
-      <div class="detail">No Ditto ID provided.</div>
-    `;
-    return;
-  }
-
- fetch(csvUrl)
-  .then(response => response.text())
-  .then(text => {
-    const rows = parseCSV(text);
-    const headers = rows[0];
-
-    const idCol = headers.indexOf("Ditto ID");
-    const nameCol = headers.indexOf("Name");
-    const setCol = headers.indexOf("Set");
-    const conditionCol = headers.indexOf("Condition");
-    const gradeCol = headers.indexOf("Grade");
-   
-    const marketCol = headers.indexOf("Market Price");
-    const displayCol = headers.indexOf("Display Price");
-    const statusCol = headers.indexOf("Status");
-
-    const id = getParam("id");
-    const card = rows.slice(1).find(row => row[idCol] === id);
-
-    if (!card) {
-      document.getElementById("card").innerHTML = `
-        <h1>🟣 Chasing Ditto</h1>
-        <div class="detail"><strong>Card not found.</strong></div>
-        <div class="detail">${id}</div>
-      `;
-      return;
     }
 
-    const price = card[displayCol] || card[marketCol] || "Ask";
-    const status = card[statusCol] || "Unknown";
-   const grade = gradeCol !== -1 ? card[gradeCol] : "";
-const condition = card[conditionCol] || "";
-const conditionOrGrade = grade || condition;
+    if (cell || row.length) {
+      row.push(cell);
+      rows.push(row);
+    }
 
-    document.getElementById("card").innerHTML = `
-      <h1>🟣 Chasing Ditto</h1>
-      <div class="name">${card[nameCol] || "Unnamed Card"}</div>
-      <div class="detail">${card[setCol] || ""}</div>
-      <div class="detail">${conditionOrGrade}</div>
-      <div class="price">$${price}</div>
-      <div class="status">${status}</div>
-    `;
-  })
-  .catch(error => {
-    document.getElementById("card").innerHTML = `
-      <h1>🟣 Chasing Ditto</h1>
-      <div class="detail"><strong>Error loading card.</strong></div>
-      <div class="detail">${error}</div>
-    `;
-  });
+    return rows;
+  }
 
-  const condition =
-    card[gradeCol] && card[gradeCol] !== "Ungraded"
-      ? card[gradeCol]
-      : card[conditionCol];
+  function formatPrice(value) {
+    if (!value || value === "Ask") return "Ask";
+    const number = Number(value.toString().replace(/[^0-9.]/g, ""));
+    if (!number) return "Ask";
+    return number.toLocaleString("en-US");
+  }
 
-  box.innerHTML = `
-    <h1>🟣 Chasing Ditto</h1>
-    <div class="title">${card[nameCol]}</div>
-    <div class="detail">${card[setCol]} ${card[numberCol] || ""}</div>
-    <div class="detail">Condition: ${condition}</div>
-    <div class="price">$${card[priceCol]}</div>
-    <div class="status">${card[statusCol]}</div>
-  `;
-}
+  function loadCard() {
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        const headers = rows[0];
 
-loadCard();
+        const idCol = headers.indexOf("Ditto ID");
+        const nameCol = headers.indexOf("Name");
+        const setCol = headers.indexOf("Set");
+        const conditionCol = headers.indexOf("Condition");
+        const gradeCol = headers.indexOf("Grade");
+        const marketCol = headers.indexOf("Market Price");
+        const displayCol = headers.indexOf("Display Price");
+        const statusCol = headers.indexOf("Status");
+
+        const id = getParam("id");
+        const card = rows.slice(1).find(row => row[idCol] === id);
+
+        if (!card) {
+          document.getElementById("card").innerHTML = `
+            <h1>🟣 Chasing Ditto</h1>
+            <div class="detail"><strong>Card not found.</strong></div>
+            <div class="detail">${id}</div>
+          `;
+          return;
+        }
+
+        const rawPrice = card[displayCol] || card[marketCol] || "Ask";
+        const price = formatPrice(rawPrice);
+        const status = card[statusCol] || "Unknown";
+
+        const rawGrade = gradeCol !== -1 ? card[gradeCol] : "";
+        const rawCondition = card[conditionCol] || "";
+
+        const conditionMap = {
+          "Near Mint": "NM",
+          "Lightly Played": "LP",
+          "Moderately Played": "MP",
+          "Heavily Played": "HP",
+          "Damaged": "DMG"
+        };
+
+        const grade = rawGrade && rawGrade !== "Ungraded" ? rawGrade : "";
+        const condition = conditionMap[rawCondition] || rawCondition;
+        const conditionOrGrade = grade || condition;
+
+        document.getElementById("card").innerHTML = `
+          <h1>🟣 Chasing Ditto</h1>
+          <div class="name">${card[nameCol] || "Unnamed Card"}</div>
+          <div class="detail">${card[setCol] || ""}</div>
+          <div class="detail">${conditionOrGrade}</div>
+          <div class="price">$${price}</div>
+          <div class="status">${status}</div>
+        `;
+      })
+      .catch(error => {
+        document.getElementById("card").innerHTML = `
+          <h1>🟣 Chasing Ditto</h1>
+          <div class="detail"><strong>Error loading card.</strong></div>
+          <div class="detail">${error}</div>
+        `;
+      });
+  }
+
+  loadCard();
 </script>
 
 </body>
