@@ -106,30 +106,51 @@ async function loadCard() {
     return;
   }
 
-  const response = await fetch(csvUrl);
-  const text = await response.text();
-  const data = parseCSV(text);
-  const headers = data[0];
+ fetch(csvUrl)
+  .then(response => response.text())
+  .then(text => {
+    const rows = parseCSV(text);
+    const headers = rows[0];
 
-  const idCol = headers.indexOf("Ditto ID");
-  const nameCol = headers.indexOf("Product Name");
-  const setCol = headers.indexOf("Set");
-  const numberCol = headers.indexOf("Card Number");
-  const gradeCol = headers.indexOf("Grade");
-  const conditionCol = headers.indexOf("Condition");
-  const priceCol = headers.indexOf("Display Price");
-  const statusCol = headers.indexOf("Status");
+    const idCol = headers.indexOf("Ditto ID");
+    const nameCol = headers.indexOf("Name");
+    const setCol = headers.indexOf("Set");
+    const conditionCol = headers.indexOf("Condition");
+    const marketCol = headers.indexOf("Market Price");
+    const displayCol = headers.indexOf("Display Price");
+    const statusCol = headers.indexOf("Status");
 
-  const card = data.find((row, index) => index > 0 && row[idCol] === id);
+    const id = getParam("id");
+    const card = rows.slice(1).find(row => row[idCol] === id);
 
-  if (!card) {
-    box.innerHTML = `
+    if (!card) {
+      document.getElementById("card").innerHTML = `
+        <h1>🟣 Chasing Ditto</h1>
+        <div class="detail"><strong>Card not found.</strong></div>
+        <div class="detail">${id}</div>
+      `;
+      return;
+    }
+
+    const price = card[displayCol] || card[marketCol] || "Ask";
+    const status = card[statusCol] || "Unknown";
+
+    document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
-      <div class="detail">Card not found.</div>
-      <div class="detail">${id}</div>
+      <div class="name">${card[nameCol] || "Unnamed Card"}</div>
+      <div class="detail">${card[setCol] || ""}</div>
+      <div class="detail">${card[conditionCol] || ""}</div>
+      <div class="price">$${price}</div>
+      <div class="status">${status}</div>
     `;
-    return;
-  }
+  })
+  .catch(error => {
+    document.getElementById("card").innerHTML = `
+      <h1>🟣 Chasing Ditto</h1>
+      <div class="detail"><strong>Error loading card.</strong></div>
+      <div class="detail">${error}</div>
+    `;
+  });
 
   const condition =
     card[gradeCol] && card[gradeCol] !== "Ungraded"
