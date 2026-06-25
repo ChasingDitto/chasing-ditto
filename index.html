@@ -117,7 +117,7 @@ async function loadCard() {
     const setCol = headers.indexOf("Set");
     const conditionCol = headers.indexOf("Condition");
     const gradeCol = headers.indexOf("Grade");
-    const gradingCompanyCol = headers.indexOf("Grading Company");
+   
     const marketCol = headers.indexOf("Market Price");
     const displayCol = headers.indexOf("Display Price");
     const statusCol = headers.indexOf("Status");
@@ -136,16 +136,15 @@ async function loadCard() {
 
     const price = card[displayCol] || card[marketCol] || "Ask";
     const status = card[statusCol] || "Unknown";
-    const grade = gradeCol !== -1 ? card[gradeCol] : "";
-    const gradingCompany = gradingCompanyCol !== -1 ? card[gradingCompanyCol] : "";
-    const gradeText = grade ? `${gradingCompany ? gradingCompany + " " : ""}${grade}` : "";
+   const grade = gradeCol !== -1 ? card[gradeCol] : "";
+const condition = card[conditionCol] || "";
+const conditionOrGrade = grade || condition;
 
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
       <div class="name">${card[nameCol] || "Unnamed Card"}</div>
       <div class="detail">${card[setCol] || ""}</div>
-      <div class="detail">${card[conditionCol] || ""}</div>
-      ${gradeText ? `<div class="detail">${gradeText}</div>` : ""}
+      <div class="detail">${conditionOrGrade}</div>
       <div class="price">$${price}</div>
       <div class="status">${status}</div>
     `;
