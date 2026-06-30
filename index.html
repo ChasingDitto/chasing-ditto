@@ -131,8 +131,11 @@
           return;
         }
 
-        const rawPrice = card[displayCol] || card[marketCol] || "Ask";
-        const price = formatPrice(rawPrice);
+        const displayPrice = Number((card[displayCol] || "").toString().replace(/[^0-9.]/g, ""));
+const marketPrice = Number((card[marketCol] || "").toString().replace(/[^0-9.]/g, ""));
+
+const bestPrice = Math.max(displayPrice || 0, marketPrice || 0);
+const price = bestPrice > 0 ? bestPrice.toLocaleString("en-US") : "Ask";
         const status = card[statusCol] || "Unknown";
 
         const rawGrade = gradeCol !== -1 ? card[gradeCol] : "";
