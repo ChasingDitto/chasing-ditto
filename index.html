@@ -13,7 +13,7 @@
       padding: 30px;
     }
     .card {
-      max-width: 450px;
+      max-width: 500px;
       margin: auto;
       background: #222;
       border-radius: 20px;
@@ -23,19 +23,35 @@
       color: #ff7de9;
       font-size: 34px;
     }
-    .title {
+    .name {
       font-size: 28px;
+      font-weight: bold;
+      margin: 18px 0;
+    }
+    .price {
+      font-size: 42px;
       font-weight: bold;
       margin: 20px 0;
     }
-    .price {
-      font-size: 44px;
-      font-weight: bold;
-      margin: 24px 0;
-    }
     .detail {
       font-size: 18px;
-      margin: 10px 0;
+      margin: 9px 0;
+    }
+    .label {
+      opacity: .7;
+      font-size: 14px;
+    }
+    input, button {
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+    }
+    button {
+      background: #ff7de9;
+      font-weight: bold;
+      cursor: pointer;
     }
     .status {
       margin-top: 20px;
@@ -51,6 +67,8 @@
   </div>
 
 <script>
+  const DEALER_PIN = "1234";
+
   const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
 
   function getParam(name) {
@@ -96,11 +114,98 @@
     return rows;
   }
 
-  function formatPrice(value) {
-    if (!value || value === "Ask") return "Ask";
-    const number = Number(value.toString().replace(/[^0-9.]/g, ""));
-    if (!number) return "Ask";
-    return number.toLocaleString("en-US");
+  function money(value) {
+    const number = Number((value || "").toString().replace(/[^0-9.]/g, ""));
+    return number > 0 ? "$" + number.toLocaleString("en-US") : "Ask";
+  }
+
+  function col(headers, names) {
+    for (const name of names) {
+      const index = headers.indexOf(name);
+      if (index !== -1) return index;
+    }
+    return -1;
+  }
+
+  function val(row, index) {
+    return index !== -1 ? row[index] || "" : "";
+  }
+
+  function showPinScreen(cardData) {
+    document.getElementById("card").innerHTML = `
+      <h1>🟣 Chasing Ditto</h1>
+      <div class="detail">Dealer Mode</div>
+      <input id="pin" type="password" placeholder="Enter PIN">
+      <br>
+      <button onclick="checkPin()">Unlock</button>
+      <div class="status">Denver Show Mode</div>
+    `;
+
+    window.currentCardData = cardData;
+  }
+
+  function checkPin() {
+    const entered = document.getElementById("pin").value;
+
+    if (entered === DEALER_PIN) {
+      renderDealerCard(window.currentCardData);
+    } else {
+      alert("Incorrect PIN");
+    }
+  }
+
+  function renderDealerCard(data) {
+    const row = data.row;
+    const h = data.headers;
+
+    const category = val(row, col(h, ["Category", "Product Type"]));
+    const set = val(row, col(h, ["Set"]));
+    const name = val(row, col(h, ["Product Name", "Name"]));
+    const number = val(row, col(h, ["Card Number", "Number"]));
+    const rarity = val(row, col(h, ["Rarity"]));
+    const variance = val(row, col(h, ["Variance", "Variant"]));
+    const gradeRaw = val(row, col(h, ["Grade"]));
+    const conditionRaw = val(row, col(h, ["Card Condition", "Condition"]));
+    const quantity = val(row, col(h, ["Quantity"]));
+    const notes = val(row, col(h, ["Notes"]));
+    const status = val(row, col(h, ["Status"])) || "Unknown";
+
+    const market = val(row, col(h, ["Market Price"]));
+    const display = val(row, col(h, ["Display Price"]));
+
+    const marketNum = Number((market || "").toString().replace(/[^0-9.]/g, ""));
+    const displayNum = Number((display || "").toString().replace(/[^0-9.]/g, ""));
+    const bestPrice = Math.max(marketNum || 0, displayNum || 0);
+
+    const conditionMap = {
+      "Near Mint": "NM",
+      "Lightly Played": "LP",
+      "Moderately Played": "MP",
+      "Heavily Played": "HP",
+      "Damaged": "DMG"
+    };
+
+    const grade = gradeRaw && gradeRaw !== "Ungraded" ? gradeRaw : "";
+    const condition = conditionMap[conditionRaw] || conditionRaw;
+    const gradeOrCondition = grade || condition;
+
+    document.getElementById("card").innerHTML = `
+      <h1>🟣 Chasing Ditto</h1>
+
+      <div class="name">${name || "Unnamed Card"}</div>
+      <div class="price">${bestPrice > 0 ? "$" + bestPrice.toLocaleString("en-US") : "Ask"}</div>
+
+      <div class="detail"><span class="label">Category:</span> ${category}</div>
+      <div class="detail"><span class="label">Set:</span> ${set}</div>
+      <div class="detail"><span class="label">Card Number:</span> ${number}</div>
+      <div class="detail"><span class="label">Rarity:</span> ${rarity}</div>
+      <div class="detail"><span class="label">Variance:</span> ${variance}</div>
+      <div class="detail"><span class="label">Grade / Condition:</span> ${gradeOrCondition}</div>
+      <div class="detail"><span class="label">Quantity:</span> ${quantity || "1"}</div>
+      <div class="detail"><span class="label">Notes:</span> ${notes}</div>
+
+      <div class="status">${status}</div>
+    `;
   }
 
   function loadCard() {
@@ -111,18 +216,10 @@
         const headers = rows[0];
 
         const idCol = headers.indexOf("Ditto ID");
-        const nameCol = headers.indexOf("Name");
-        const setCol = headers.indexOf("Set");
-        const conditionCol = headers.indexOf("Condition");
-        const gradeCol = headers.indexOf("Grade");
-        const marketCol = headers.indexOf("Market Price");
-        const displayCol = headers.indexOf("Display Price");
-        const statusCol = headers.indexOf("Status");
-
         const id = getParam("id");
-        const card = rows.slice(1).find(row => row[idCol] === id);
+        const row = rows.slice(1).find(r => r[idCol] === id);
 
-        if (!card) {
+        if (!row) {
           document.getElementById("card").innerHTML = `
             <h1>🟣 Chasing Ditto</h1>
             <div class="detail"><strong>Card not found.</strong></div>
@@ -131,36 +228,7 @@
           return;
         }
 
-        const displayPrice = Number((card[displayCol] || "").toString().replace(/[^0-9.]/g, ""));
-const marketPrice = Number((card[marketCol] || "").toString().replace(/[^0-9.]/g, ""));
-
-const bestPrice = Math.max(displayPrice || 0, marketPrice || 0);
-const price = bestPrice > 0 ? bestPrice.toLocaleString("en-US") : "Ask";
-        const status = card[statusCol] || "Unknown";
-
-        const rawGrade = gradeCol !== -1 ? card[gradeCol] : "";
-        const rawCondition = card[conditionCol] || "";
-
-        const conditionMap = {
-          "Near Mint": "NM",
-          "Lightly Played": "LP",
-          "Moderately Played": "MP",
-          "Heavily Played": "HP",
-          "Damaged": "DMG"
-        };
-
-        const grade = rawGrade && rawGrade !== "Ungraded" ? rawGrade : "";
-        const condition = conditionMap[rawCondition] || rawCondition;
-        const conditionOrGrade = grade || condition;
-
-        document.getElementById("card").innerHTML = `
-          <h1>🟣 Chasing Ditto</h1>
-          <div class="name">${card[nameCol] || "Unnamed Card"}</div>
-          <div class="detail">${card[setCol] || ""}</div>
-          <div class="detail">${conditionOrGrade}</div>
-          <div class="price">$${price}</div>
-          <div class="status">${status}</div>
-        `;
+        showPinScreen({ row, headers });
       })
       .catch(error => {
         document.getElementById("card").innerHTML = `
