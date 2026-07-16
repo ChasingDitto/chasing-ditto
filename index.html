@@ -12,6 +12,7 @@
       text-align: center;
       padding: 30px;
     }
+
     .card {
       max-width: 500px;
       margin: auto;
@@ -19,43 +20,94 @@
       border-radius: 20px;
       padding: 25px;
     }
+
     h1 {
       color: #ff7de9;
       font-size: 34px;
     }
+
     .name {
       font-size: 28px;
       font-weight: bold;
       margin: 18px 0;
     }
+
     .price {
       font-size: 42px;
       font-weight: bold;
       margin: 20px 0;
     }
+
     .detail {
       font-size: 18px;
       margin: 9px 0;
     }
+
     .label {
-      opacity: .7;
+      opacity: 0.7;
       font-size: 14px;
     }
-    input, button {
+
+    input,
+    button {
+      box-sizing: border-box;
+      width: 100%;
       font-size: 20px;
       padding: 12px;
       border-radius: 10px;
       border: none;
       margin-top: 10px;
     }
+
     button {
       background: #ff7de9;
+      color: #111;
       font-weight: bold;
       cursor: pointer;
     }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .sale-box {
+      margin-top: 24px;
+      padding: 18px;
+      background: #181818;
+      border-radius: 14px;
+    }
+
+    .sale-button {
+      background: #62d98b;
+    }
+
     .status {
       margin-top: 20px;
-      opacity: .85;
+      opacity: 0.85;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: #62d98b;
+    }
+
+    .error {
+      color: #ff7777;
+    }
+
+    .sold-banner {
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #62d98b;
+      color: #111;
+      font-size: 26px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -67,9 +119,13 @@
   </div>
 
 <script>
-  const DEALER_PIN = "1218";
+  const DEALER_PIN = "1234";
 
-  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
+  const csvUrl =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
+
+  const saleApiUrl =
+    "https://script.google.com/macros/s/AKfycbyzdiRPRX_96FCdJT1Z0utx3NbPPG-dWfXH49zfvXj1hJpajJVnJX0Ye_2Wquz3okyT/exec";
 
   function getParam(name) {
     return new URLSearchParams(window.location.search).get(name);
@@ -114,16 +170,12 @@
     return rows;
   }
 
-  function money(value) {
-    const number = Number((value || "").toString().replace(/[^0-9.]/g, ""));
-    return number > 0 ? "$" + number.toLocaleString("en-US") : "Ask";
-  }
-
   function col(headers, names) {
     for (const name of names) {
       const index = headers.indexOf(name);
       if (index !== -1) return index;
     }
+
     return -1;
   }
 
@@ -131,17 +183,64 @@
     return index !== -1 ? row[index] || "" : "";
   }
 
+  function numericPrice(value) {
+    const number = Number(
+      (value || "").toString().replace(/[^0-9.]/g, "")
+    );
+
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function formatPrice(value) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number) || number <= 0) {
+      return "Ask";
+    }
+
+    return "$" + number.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function showPinScreen(cardData) {
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
       <div class="detail">Dealer Mode</div>
-      <input id="pin" type="password" placeholder="Enter PIN">
-      <br>
+
+      <input
+        id="pin"
+        type="password"
+        inputmode="numeric"
+        placeholder="Enter PIN"
+      >
+
       <button onclick="checkPin()">Unlock</button>
+
       <div class="status">Denver Show Mode</div>
     `;
 
     window.currentCardData = cardData;
+
+    const pinInput = document.getElementById("pin");
+
+    pinInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        checkPin();
+      }
+    });
+
+    pinInput.focus();
   }
 
   function checkPin() {
@@ -158,6 +257,7 @@
     const row = data.row;
     const h = data.headers;
 
+    const dittoId = val(row, col(h, ["Ditto ID"]));
     const category = val(row, col(h, ["Category", "Product Type"]));
     const set = val(row, col(h, ["Set"]));
     const name = val(row, col(h, ["Product Name", "Name"]));
@@ -167,15 +267,16 @@
     const gradeRaw = val(row, col(h, ["Grade"]));
     const conditionRaw = val(row, col(h, ["Card Condition", "Condition"]));
     const quantity = val(row, col(h, ["Quantity"]));
+    const location = val(row, col(h, ["Location"]));
     const notes = val(row, col(h, ["Notes"]));
     const status = val(row, col(h, ["Status"])) || "Unknown";
 
     const market = val(row, col(h, ["Market Price"]));
     const display = val(row, col(h, ["Display Price"]));
 
-    const marketNum = Number((market || "").toString().replace(/[^0-9.]/g, ""));
-    const displayNum = Number((display || "").toString().replace(/[^0-9.]/g, ""));
-    const bestPrice = Math.max(marketNum || 0, displayNum || 0);
+    const marketNum = numericPrice(market);
+    const displayNum = numericPrice(display);
+    const bestPrice = Math.max(marketNum, displayNum);
 
     const conditionMap = {
       "Near Mint": "NM",
@@ -185,46 +286,229 @@
       "Damaged": "DMG"
     };
 
-    const grade = gradeRaw && gradeRaw !== "Ungraded" ? gradeRaw : "";
-    const condition = conditionMap[conditionRaw] || conditionRaw;
+    const grade =
+      gradeRaw && gradeRaw !== "Ungraded"
+        ? gradeRaw
+        : "";
+
+    const condition =
+      conditionMap[conditionRaw] || conditionRaw;
+
     const gradeOrCondition = grade || condition;
+
+    window.currentSale = {
+      dittoId,
+      name,
+      bestPrice
+    };
+
+    const alreadySold = status.toLowerCase() === "sold";
 
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
 
-      <div class="name">${name || "Unnamed Card"}</div>
-      <div class="price">${bestPrice > 0 ? "$" + bestPrice.toLocaleString("en-US") : "Ask"}</div>
+      <div class="name">${escapeHtml(name || "Unnamed Card")}</div>
+      <div class="price">${formatPrice(bestPrice)}</div>
 
-      <div class="detail"><span class="label">Category:</span> ${category}</div>
-      <div class="detail"><span class="label">Set:</span> ${set}</div>
-      <div class="detail"><span class="label">Card Number:</span> ${number}</div>
-      <div class="detail"><span class="label">Rarity:</span> ${rarity}</div>
-      <div class="detail"><span class="label">Variance:</span> ${variance}</div>
-      <div class="detail"><span class="label">Grade / Condition:</span> ${gradeOrCondition}</div>
-      <div class="detail"><span class="label">Quantity:</span> ${quantity || "1"}</div>
-      <div class="detail"><span class="label">Notes:</span> ${notes}</div>
+      <div class="detail">
+        <span class="label">Ditto ID:</span>
+        ${escapeHtml(dittoId)}
+      </div>
 
-      <div class="status">${status}</div>
+      <div class="detail">
+        <span class="label">Category:</span>
+        ${escapeHtml(category)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Set:</span>
+        ${escapeHtml(set)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Card Number:</span>
+        ${escapeHtml(number)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Rarity:</span>
+        ${escapeHtml(rarity)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Variance:</span>
+        ${escapeHtml(variance)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Grade / Condition:</span>
+        ${escapeHtml(gradeOrCondition)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Quantity:</span>
+        ${escapeHtml(quantity || "1")}
+      </div>
+
+      <div class="detail">
+        <span class="label">Location:</span>
+        ${escapeHtml(location)}
+      </div>
+
+      <div class="detail">
+        <span class="label">Notes:</span>
+        ${escapeHtml(notes)}
+      </div>
+
+      <div class="status" id="cardStatus">${escapeHtml(status)}</div>
+
+      ${
+        alreadySold
+          ? `
+            <div class="sold-banner">
+              ✅ SOLD
+            </div>
+          `
+          : `
+            <div class="sale-box" id="saleBox">
+              <div class="detail">
+                <strong>Complete Sale</strong>
+              </div>
+
+              <input
+                id="soldPrice"
+                type="number"
+                inputmode="decimal"
+                min="0.01"
+                step="0.01"
+                value="${bestPrice > 0 ? bestPrice.toFixed(2) : ""}"
+                placeholder="Enter sold price"
+              >
+
+              <button
+                id="completeSaleButton"
+                class="sale-button"
+                onclick="completeSale()"
+              >
+                💰 Complete Sale
+              </button>
+
+              <div id="saleMessage" class="message"></div>
+            </div>
+          `
+      }
     `;
+  }
+
+  async function completeSale() {
+    const sale = window.currentSale;
+    const priceInput = document.getElementById("soldPrice");
+    const button = document.getElementById("completeSaleButton");
+    const message = document.getElementById("saleMessage");
+
+    const soldPrice = Number(priceInput.value);
+
+    if (!sale || !sale.dittoId) {
+      message.className = "message error";
+      message.textContent = "Missing Ditto ID.";
+      return;
+    }
+
+    if (!Number.isFinite(soldPrice) || soldPrice <= 0) {
+      message.className = "message error";
+      message.textContent = "Please enter a valid sold price.";
+      return;
+    }
+
+    const confirmed = confirm(
+      `Complete sale?\n\n${sale.name}\n${sale.dittoId}\nSold Price: ${formatPrice(soldPrice)}`
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+    priceInput.disabled = true;
+
+    message.className = "message";
+    message.textContent = "Completing sale...";
+
+    try {
+      const response = await fetch(saleApiUrl, {
+        method: "POST",
+
+        // text/plain avoids an unnecessary browser preflight request.
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+
+        body: JSON.stringify({
+          action: "completeSale",
+          dittoId: sale.dittoId,
+          soldPrice: soldPrice
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Sale could not be completed.");
+      }
+
+      document.getElementById("cardStatus").textContent = "Sold";
+
+      document.getElementById("saleBox").innerHTML = `
+        <div class="sold-banner">
+          ✅ SOLD
+        </div>
+
+        <div class="detail">
+          ${escapeHtml(result.cardName || sale.name)}
+        </div>
+
+        <div class="detail">
+          Sold for ${formatPrice(result.soldPrice || soldPrice)}
+        </div>
+      `;
+
+    } catch (error) {
+      button.disabled = false;
+      priceInput.disabled = false;
+
+      message.className = "message error";
+      message.textContent =
+        error && error.message
+          ? error.message
+          : "The sale could not be completed.";
+    }
   }
 
   function loadCard() {
     fetch(csvUrl)
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Inventory could not be loaded.");
+        }
+
+        return response.text();
+      })
       .then(text => {
         const rows = parseCSV(text);
         const headers = rows[0];
 
         const idCol = headers.indexOf("Ditto ID");
         const id = getParam("id");
-        const row = rows.slice(1).find(r => r[idCol] === id);
+
+        const row = rows
+          .slice(1)
+          .find(candidate => candidate[idCol] === id);
 
         if (!row) {
           document.getElementById("card").innerHTML = `
             <h1>🟣 Chasing Ditto</h1>
             <div class="detail"><strong>Card not found.</strong></div>
-            <div class="detail">${id}</div>
+            <div class="detail">${escapeHtml(id)}</div>
           `;
+
           return;
         }
 
@@ -234,7 +518,7 @@
         document.getElementById("card").innerHTML = `
           <h1>🟣 Chasing Ditto</h1>
           <div class="detail"><strong>Error loading card.</strong></div>
-          <div class="detail">${error}</div>
+          <div class="detail">${escapeHtml(error.message || error)}</div>
         `;
       });
   }
