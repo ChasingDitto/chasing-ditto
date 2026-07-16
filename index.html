@@ -71,7 +71,7 @@
       cursor: not-allowed;
     }
 
-    .sale-box {
+    .action-box {
       margin-top: 24px;
       padding: 18px;
       background: #181818;
@@ -80,6 +80,10 @@
 
     .sale-button {
       background: #62d98b;
+    }
+
+    .reverse-button {
+      background: #ffb85c;
     }
 
     .status {
@@ -101,12 +105,22 @@
     }
 
     .sold-banner {
-      margin-top: 24px;
+      margin-top: 18px;
       padding: 18px;
       border-radius: 12px;
       background: #62d98b;
       color: #111;
       font-size: 26px;
+      font-weight: bold;
+    }
+
+    .available-banner {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #ff7de9;
+      color: #111;
+      font-size: 24px;
       font-weight: bold;
     }
   </style>
@@ -119,7 +133,7 @@
   </div>
 
 <script>
-  const DEALER_PIN = "1218";
+  const DEALER_PIN = "1234";
 
   const csvUrl =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
@@ -302,7 +316,8 @@
       bestPrice
     };
 
-    const alreadySold = status.toLowerCase() === "sold";
+    const alreadySold =
+      status.toLowerCase() === "sold";
 
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
@@ -360,44 +375,80 @@
         ${escapeHtml(notes)}
       </div>
 
-      <div class="status" id="cardStatus">${escapeHtml(status)}</div>
+      <div class="status" id="cardStatus">
+        ${escapeHtml(status)}
+      </div>
 
-      ${
-        alreadySold
-          ? `
-            <div class="sold-banner">
-              ✅ SOLD
-            </div>
-          `
-          : `
-            <div class="sale-box" id="saleBox">
-              <div class="detail">
-                <strong>Complete Sale</strong>
-              </div>
-
-              <input
-                id="soldPrice"
-                type="number"
-                inputmode="decimal"
-                min="0.01"
-                step="0.01"
-                value="${bestPrice > 0 ? bestPrice.toFixed(2) : ""}"
-                placeholder="Enter sold price"
-              >
-
-              <button
-                id="completeSaleButton"
-                class="sale-button"
-                onclick="completeSale()"
-              >
-                💰 Complete Sale
-              </button>
-
-              <div id="saleMessage" class="message"></div>
-            </div>
-          `
-      }
+      <div id="transactionArea">
+        ${
+          alreadySold
+            ? soldControls()
+            : availableControls(bestPrice)
+        }
+      </div>
     `;
+  }
+
+  function availableControls(defaultPrice) {
+    return `
+      <div class="action-box" id="saleBox">
+        <div class="detail">
+          <strong>Complete Sale</strong>
+        </div>
+
+        <input
+          id="soldPrice"
+          type="number"
+          inputmode="decimal"
+          min="0.01"
+          step="0.01"
+          value="${defaultPrice > 0 ? defaultPrice.toFixed(2) : ""}"
+          placeholder="Enter sold price"
+        >
+
+        <button
+          id="completeSaleButton"
+          class="sale-button"
+          onclick="completeSale()"
+        >
+          💰 Complete Sale
+        </button>
+
+        <div id="saleMessage" class="message"></div>
+      </div>
+    `;
+  }
+
+  function soldControls() {
+    return `
+      <div class="action-box" id="reverseBox">
+        <div class="sold-banner">
+          ✅ SOLD
+        </div>
+
+        <button
+          id="reverseSaleButton"
+          class="reverse-button"
+          onclick="reverseSale()"
+        >
+          ↩️ Reverse Sale
+        </button>
+
+        <div id="reverseMessage" class="message"></div>
+      </div>
+    `;
+  }
+
+  async function sendApiRequest(payload) {
+    const response = await fetch(saleApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    return response.json();
   }
 
   async function completeSale() {
@@ -421,7 +472,10 @@
     }
 
     const confirmed = confirm(
-      `Complete sale?\n\n${sale.name}\n${sale.dittoId}\nSold Price: ${formatPrice(soldPrice)}`
+      `Complete sale?\n\n` +
+      `${sale.name}\n` +
+      `${sale.dittoId}\n` +
+      `Sold Price: ${formatPrice(soldPrice)}`
     );
 
     if (!confirmed) return;
@@ -433,40 +487,43 @@
     message.textContent = "Completing sale...";
 
     try {
-      const response = await fetch(saleApiUrl, {
-        method: "POST",
-
-        // text/plain avoids an unnecessary browser preflight request.
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-
-        body: JSON.stringify({
-          action: "completeSale",
-          dittoId: sale.dittoId,
-          soldPrice: soldPrice
-        })
+      const result = await sendApiRequest({
+        action: "completeSale",
+        dittoId: sale.dittoId,
+        soldPrice
       });
 
-      const result = await response.json();
-
       if (!result.success) {
-        throw new Error(result.message || "Sale could not be completed.");
+        throw new Error(
+          result.message || "Sale could not be completed."
+        );
       }
 
       document.getElementById("cardStatus").textContent = "Sold";
 
-      document.getElementById("saleBox").innerHTML = `
-        <div class="sold-banner">
-          ✅ SOLD
-        </div>
+      document.getElementById("transactionArea").innerHTML = `
+        <div class="action-box">
+          <div class="sold-banner">
+            ✅ SALE COMPLETE
+          </div>
 
-        <div class="detail">
-          ${escapeHtml(result.cardName || sale.name)}
-        </div>
+          <div class="detail">
+            ${escapeHtml(result.cardName || sale.name)}
+          </div>
 
-        <div class="detail">
-          Sold for ${formatPrice(result.soldPrice || soldPrice)}
+          <div class="detail">
+            Sold for ${formatPrice(result.soldPrice || soldPrice)}
+          </div>
+
+          <button
+            id="reverseSaleButton"
+            class="reverse-button"
+            onclick="reverseSale()"
+          >
+            ↩️ Reverse Sale
+          </button>
+
+          <div id="reverseMessage" class="message"></div>
         </div>
       `;
 
@@ -479,6 +536,70 @@
         error && error.message
           ? error.message
           : "The sale could not be completed.";
+    }
+  }
+
+  async function reverseSale() {
+    const sale = window.currentSale;
+    const button = document.getElementById("reverseSaleButton");
+    const message = document.getElementById("reverseMessage");
+
+    if (!sale || !sale.dittoId) {
+      message.className = "message error";
+      message.textContent = "Missing Ditto ID.";
+      return;
+    }
+
+    const confirmed = confirm(
+      `Reverse this sale?\n\n` +
+      `${sale.name}\n` +
+      `${sale.dittoId}\n\n` +
+      `The card will return to Available.`
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+
+    message.className = "message";
+    message.textContent = "Reversing sale...";
+
+    try {
+      const result = await sendApiRequest({
+        action: "reverseSale",
+        dittoId: sale.dittoId
+      });
+
+      if (!result.success) {
+        throw new Error(
+          result.message || "Sale could not be reversed."
+        );
+      }
+
+      document.getElementById("cardStatus").textContent = "Available";
+
+      document.getElementById("transactionArea").innerHTML = `
+        <div class="action-box">
+          <div class="available-banner">
+            ↩️ SALE REVERSED
+          </div>
+
+          <div class="detail">
+            ${escapeHtml(result.cardName || sale.name)}
+          </div>
+
+          ${availableControls(sale.bestPrice)}
+        </div>
+      `;
+
+    } catch (error) {
+      button.disabled = false;
+
+      message.className = "message error";
+      message.textContent =
+        error && error.message
+          ? error.message
+          : "The sale could not be reversed.";
     }
   }
 
