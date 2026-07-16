@@ -134,6 +134,8 @@
 
 <script>
   const DEALER_PIN = "1218";
+  const DEALER_UNLOCK_HOURS = 12;
+  const DEALER_UNLOCK_KEY = "scanTheDittoDealerUnlockedUntil";
 
   const csvUrl =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpa9RpRgfWNG_NMtNUXOm44rgm2uiGKojCKMtI8ZM0sIA06otvvWuadd7QnlqzeCLeZ-nxfq81Sb0I/pub?gid=629495162&single=true&output=csv";
@@ -227,6 +229,34 @@
       .replaceAll("'", "&#039;");
   }
 
+  function rememberDealerUnlock() {
+    const unlockedUntil =
+      Date.now() + DEALER_UNLOCK_HOURS * 60 * 60 * 1000;
+
+    localStorage.setItem(
+      DEALER_UNLOCK_KEY,
+      String(unlockedUntil)
+    );
+  }
+
+  function isDealerUnlocked() {
+    const unlockedUntil = Number(
+      localStorage.getItem(DEALER_UNLOCK_KEY)
+    );
+
+    return Number.isFinite(unlockedUntil) &&
+      unlockedUntil > Date.now();
+  }
+
+  function forgetDealerUnlock() {
+    localStorage.removeItem(DEALER_UNLOCK_KEY);
+    alert("This device has been locked.");
+
+    if (window.currentCardData) {
+      showPinScreen(window.currentCardData);
+    }
+  }
+
   function showPinScreen(cardData) {
     document.getElementById("card").innerHTML = `
       <h1>🟣 Chasing Ditto</h1>
@@ -261,6 +291,7 @@
     const entered = document.getElementById("pin").value;
 
     if (entered === DEALER_PIN) {
+      rememberDealerUnlock();
       renderDealerCard(window.currentCardData);
     } else {
       alert("Incorrect PIN");
@@ -379,6 +410,14 @@
         ${escapeHtml(status)}
       </div>
 
+      <button
+        type="button"
+        onclick="forgetDealerUnlock()"
+        style="margin-top:18px;background:#444;color:white;font-size:15px;"
+      >
+        🔒 Forget This Device
+      </button>
+
       <div id="transactionArea">
         ${
           alreadySold
@@ -387,6 +426,14 @@
         }
       </div>
     `;
+
+    setTimeout(() => {
+      const soldPriceInput = document.getElementById("soldPrice");
+      if (soldPriceInput) {
+        soldPriceInput.focus();
+        soldPriceInput.select();
+      }
+    }, 0);
   }
 
   function availableControls(defaultPrice) {
@@ -633,7 +680,14 @@
           return;
         }
 
-        showPinScreen({ row, headers });
+        const cardData = { row, headers };
+        window.currentCardData = cardData;
+
+        if (isDealerUnlocked()) {
+          renderDealerCard(cardData);
+        } else {
+          showPinScreen(cardData);
+        }
       })
       .catch(error => {
         document.getElementById("card").innerHTML = `
