@@ -429,9 +429,23 @@
 
     setTimeout(() => {
       const soldPriceInput = document.getElementById("soldPrice");
+
       if (soldPriceInput) {
         soldPriceInput.focus();
         soldPriceInput.select();
+
+        soldPriceInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+
+            const button =
+              document.getElementById("completeSaleButton");
+
+            if (button && !button.disabled) {
+              completeSale();
+            }
+          }
+        });
       }
     }, 0);
   }
