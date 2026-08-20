@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scan the Ditto</title>
+</head>
+
+<body>
+  <p>Ditto is opening your card...</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    const appUrl =
+      "https://script.google.com/macros/s/AKfycbwpUJF9ZAiV-DdkdgN6giav7BP9e4MOdYkTeuj3AEt0XymiZZtJduaVpEONogxQPUjc/exec";
+
+    if (id) {
+      window.location.replace(
+        appUrl + "?id=" + encodeURIComponent(id)
+      );
+    } else {
+      document.body.innerHTML =
+        "<h2>No Ditto ID found.</h2>";
+    }
+  </script>
+</body>
+</html>
