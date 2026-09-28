@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Scan the Ditto Offline</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111111;
+      color: #ffffff;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 54px;
+      margin-top: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 8px 0 4px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #bbbbbb;
+      margin-bottom: 30px;
+    }
+
+    .status {
+      background: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .status-title {
+      font-size: 13px;
+      color: #aaaaaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .status-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 18px;
+      margin: 8px 0;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .scan-button {
+      background: #ff66b3;
+      color: #111111;
+    }
+
+    .sync-button {
+      background: #7dd3fc;
+      color: #111111;
+    }
+
+    .lookup {
+      margin-top: 22px;
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      color: #aaaaaa;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #444444;
+      background: #111111;
+      color: #ffffff;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+
+    .lookup-button {
+      background: #333333;
+      color: #ffffff;
+      margin-top: 12px;
+    }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      color: #777777;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .online {
+      color: #72e59a;
+    }
+
+    .offline {
+      color: #ffcf66;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <div class="logo">🔴</div>
+
+    <h1>SCAN THE DITTO</h1>
+
+    <div class="subtitle">
+      Offline Card Lookup
+    </div>
+
+    <div class="status">
+      <div class="status-title">Connection</div>
+      <div id="connectionStatus" class="status-value">
+        Checking...
+      </div>
+    </div>
+
+    <div class="status">
+      <div class="status-title">Offline Inventory</div>
+      <div id="inventoryStatus" class="status-value">
+        No inventory synced yet
+      </div>
+    </div>
+
+    <button class="scan-button" onclick="scanCard()">
+      📷 SCAN CARD
+    </button>
+
+    <button class="sync-button" onclick="syncInventory()">
+      ↻ SYNC INVENTORY
+    </button>
+
+    <div class="lookup">
+
+      <label for="dittoId">
+        MANUAL DITTO ID
+      </label>
+
+      <input
+        id="dittoId"
+        type="text"
+        placeholder="D00001"
+        autocomplete="off"
+      >
+
+      <button class="lookup-button" onclick="lookupCard()">
+        LOOK UP CARD
+      </button>
+
+    </div>
+
+    <div class="footer">
+      Chasing Ditto<br>
+      Market sources inform the price. Ditto sets the price.
+    </div>
+
+  </div>
+
+  <script>
+
+    function updateConnectionStatus() {
+      const el = document.getElementById("connectionStatus");
+
+      if (navigator.onLine) {
+        el.textContent = "ONLINE";
+        el.className = "status-value online";
+      } else {
+        el.textContent = "OFFLINE — DITTO STILL LIVES";
+        el.className = "status-value offline";
+      }
+    }
+
+
+    function updateInventoryStatus() {
+      const inventory = localStorage.getItem("dittoInventory");
+      const synced = localStorage.getItem("dittoLastSync");
+
+      const el = document.getElementById("inventoryStatus");
+
+      if (!inventory) {
+        el.textContent = "No inventory synced yet";
+        return;
+      }
+
+      try {
+        const cards = JSON.parse(inventory);
+        const count = Object.keys(cards).length;
+
+        if (synced) {
+          const date = new Date(synced);
+
+          el.textContent =
+            count +
+            " cards • Last sync " +
+            date.toLocaleString();
+        } else {
+          el.textContent =
+            count + " cards stored on this phone";
+        }
+
+      } catch (error) {
+        el.textContent = "Offline inventory needs to be synced";
+      }
+    }
+
+
+    function normalizeDittoId(value) {
+      let id = String(value || "")
+        .trim()
+        .toUpperCase();
+
+      const urlMatch = id.match(/[?&]ID=(D?\d+)/i);
+
+      if (urlMatch) {
+        id = urlMatch[1].toUpperCase();
+      }
+
+      id = id.replace(/^D/, "");
+
+      if (!/^\d+$/.test(id)) {
+        return "";
+      }
+
+      return "D" + id.padStart(5, "0");
+    }
+
+
+    function lookupCard() {
+      const input =
+        document.getElementById("dittoId").value;
+
+      const id = normalizeDittoId(input);
+
+      if (!id) {
+        alert("Enter a valid Ditto ID.");
+        return;
+      }
+
+      const inventory =
+        localStorage.getItem("dittoInventory");
+
+      if (!inventory) {
+        alert(
+          "No offline inventory has been synced to this phone yet."
+        );
+        return;
+      }
+
+      let cards;
+
+      try {
+        cards = JSON.parse(inventory);
+      } catch (error) {
+        alert("The offline inventory could not be read.");
+        return;
+      }
+
+      if (!cards[id]) {
+        alert(
+          id +
+          " is not in the offline inventory on this phone."
+        );
+        return;
+      }
+
+      localStorage.setItem(
+        "dittoCurrentCard",
+        JSON.stringify(cards[id])
+      );
+
+      localStorage.setItem(
+        "dittoCurrentId",
+        id
+      );
+
+      alert(
+        id +
+        " found offline.\n\n" +
+        "Card display is coming in the next step."
+      );
+    }
+
+
+    function scanCard() {
+      alert(
+        "Camera scanner is not connected yet.\n\n" +
+        "We're building the offline foundation first."
+      );
+    }
+
+
+    function syncInventory() {
+      alert(
+        "Inventory sync is not connected yet.\n\n" +
+        "Next we will connect this button to Scan the Ditto V4."
+      );
+    }
+
+
+    window.addEventListener(
+      "online",
+      updateConnectionStatus
+    );
+
+    window.addEventListener(
+      "offline",
+      updateConnectionStatus
+    );
+
+
+    updateConnectionStatus();
+    updateInventoryStatus();
+
+  </script>
+
+</body>
+</html>
