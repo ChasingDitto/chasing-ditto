@@ -391,6 +391,1052 @@
 
   <script>
 
+    const DITTO_SYNC_URL =
+      "https://script.google.com/macros/s/AKfycbyNRAIqNR_Hnupku-BTr-E272OcC-w45qRACcvUjDVha72KxZGU9aD4hqWc38QNuSwsFA/exec";
+
+
+    function updateConnectionStatus() {
+
+      const el =
+        document.getElementById(
+          "connectionStatus"
+        );
+
+
+      if (navigator.onLine) {
+
+        el.textContent =
+          "ONLINE";
+
+        el.className =
+          "statusValue online";
+
+      } else {
+
+        el.textContent =
+          "OFFLINE — DITTO STILL LIVES";
+
+        el.className =
+          "statusValue offline";
+
+      }
+
+    }
+
+
+    function updateInventoryStatus() {
+
+      const inventory =
+        localStorage.getItem(
+          "dittoInventory"
+        );
+
+      const synced =
+        localStorage.getItem(
+          "dittoLastSync"
+        );
+
+      const el =
+        document.getElementById(
+          "inventoryStatus"
+        );
+
+
+      if (!inventory) {
+
+        el.textContent =
+          "No inventory synced yet";
+
+        return;
+
+      }
+
+
+      try {
+
+        const cards =
+          JSON.parse(inventory);
+
+        const count =
+          Object.keys(cards).length;
+
+
+        if (synced) {
+
+          const date =
+            new Date(synced);
+
+          el.textContent =
+            count +
+            " cards • Last sync " +
+            date.toLocaleString();
+
+        } else {
+
+          el.textContent =
+            count +
+            " cards stored on this phone";
+
+        }
+
+      } catch (error) {
+
+        el.textContent =
+          "Offline inventory needs to be synced";
+
+      }
+
+    }
+
+
+    function normalizeDittoId(value) {
+
+      let id =
+        String(value || "")
+          .trim()
+          .toUpperCase();
+
+
+      const urlMatch =
+        id.match(
+          /[?&]ID=(D?\d+)/i
+        );
+
+
+      if (urlMatch) {
+
+        id =
+          urlMatch[1].toUpperCase();
+
+      }
+
+
+      id =
+        id.replace(/^D/, "");
+
+
+      if (!/^\d+$/.test(id)) {
+
+        return "";
+
+      }
+
+
+      return (
+        "D" +
+        id.padStart(5, "0")
+      );
+
+    }
+
+
+    function money(value) {
+
+      const number =
+        Number(value);
+
+
+      if (
+        value === "" ||
+        value === null ||
+        typeof value === "undefined" ||
+        !isFinite(number) ||
+        number <= 0
+      ) {
+
+        return "—";
+
+      }
+
+
+      return (
+        "$" +
+        number.toLocaleString(
+          undefined,
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        )
+      );
+
+    }
+
+
+    function escapeHtml(value) {
+
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+
+    function physicalCardText(card) {
+
+      if (
+        String(card.itemType || "")
+          .toLowerCase() === "graded"
+      ) {
+
+        const parts = [];
+
+        if (card.grader) {
+          parts.push(card.grader);
+        }
+
+        if (card.grade) {
+          parts.push(card.grade);
+        }
+
+        return (
+          parts.join(" ") ||
+          "Graded"
+        );
+
+      }
+
+
+      return "Raw";
+
+    }
+
+
+    function showCard(card) {
+
+      const el =
+        document.getElementById(
+          "card"
+        );
+
+
+      const status =
+        String(
+          card.status || "ACTIVE"
+        ).toUpperCase();
+
+
+      const identityParts = [];
+
+      if (card.set) {
+        identityParts.push(card.set);
+      }
+
+      if (card.number) {
+        identityParts.push(card.number);
+      }
+
+
+      const metaParts =
+        [
+          card.game,
+          card.language,
+          card.variant
+        ].filter(Boolean);
+
+
+      let extras = "";
+
+
+      if (card.location) {
+
+        extras +=
+          '<div class="extra">' +
+          '<span class="smallTitle">LOCATION</span>' +
+          escapeHtml(card.location) +
+          '</div>';
+
+      }
+
+
+      if (card.notes) {
+
+        extras +=
+          '<div class="extra">' +
+          '<span class="smallTitle">NOTES</span>' +
+          escapeHtml(card.notes) +
+          '</div>';
+
+      }
+
+
+      el.innerHTML =
+
+        '<div class="cardTop">' +
+
+          '<div class="dittoId">' +
+            escapeHtml(card.id) +
+          '</div>' +
+
+          '<div class="cardStatus ' +
+            (
+              status === "SOLD"
+                ? "sold"
+                : ""
+            ) +
+          '">' +
+            escapeHtml(status) +
+          '</div>' +
+
+        '</div>' +
+
+
+        '<h2>' +
+          escapeHtml(card.name) +
+        '</h2>' +
+
+
+        '<div class="identity">' +
+          escapeHtml(
+            identityParts.join(" · ")
+          ) +
+        '</div>' +
+
+
+        '<div class="meta">' +
+          escapeHtml(
+            metaParts.join(" · ")
+          ) +
+        '</div>' +
+
+
+        '<div class="physical">' +
+
+          '<span class="smallTitle">' +
+            'PHYSICAL CARD' +
+          '</span>' +
+
+          '<strong>' +
+            escapeHtml(
+              physicalCardText(card)
+            ) +
+          '</strong>' +
+
+          (
+            card.condition
+              ? '<div class="condition">' +
+                  'Condition: <b>' +
+                  escapeHtml(
+                    card.condition
+                  ) +
+                  '</b>' +
+                '</div>'
+              : ''
+          ) +
+
+        '</div>' +
+
+
+        '<div class="price">' +
+
+          '<span class="smallTitle">' +
+            'DITTO PRICE' +
+          '</span>' +
+
+          '<strong>' +
+            (
+              card.ask
+                ? money(card.ask)
+                : 'NOT PRICED YET'
+            ) +
+          '</strong>' +
+
+        '</div>' +
+
+
+        '<div class="marketTitle">' +
+          'MARKET REFERENCES' +
+        '</div>' +
+
+
+        '<div class="marketGrid">' +
+
+          '<div class="market">' +
+            '<span>COLLECTR</span>' +
+            '<strong>' +
+              money(card.collectr) +
+            '</strong>' +
+          '</div>' +
+
+          '<div class="market">' +
+            '<span>PRICECHARTING</span>' +
+            '<strong>' +
+              money(card.pcReference) +
+            '</strong>' +
+          '</div>' +
+
+          '<div class="market">' +
+            '<span>TCGPLAYER</span>' +
+            '<strong>' +
+              (
+                card.tcgRef
+                  ? 'LINKED'
+                  : '—'
+              ) +
+            '</strong>' +
+          '</div>' +
+
+        '</div>' +
+
+        extras;
+
+
+      el.style.display =
+        "block";
+
+
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }
+
+
+    function lookupCard() {
+
+      const input =
+        document
+          .getElementById(
+            "dittoId"
+          )
+          .value;
+
+
+      const id =
+        normalizeDittoId(input);
+
+
+      if (!id) {
+
+        alert(
+          "Enter a valid Ditto ID."
+        );
+
+        return;
+
+      }
+
+
+      const inventory =
+        localStorage.getItem(
+          "dittoInventory"
+        );
+
+
+      if (!inventory) {
+
+        alert(
+          "No offline inventory has been synced to this phone yet."
+        );
+
+        return;
+
+      }
+
+
+      let cards;
+
+
+      try {
+
+        cards =
+          JSON.parse(inventory);
+
+      } catch (error) {
+
+        alert(
+          "The offline inventory could not be read."
+        );
+
+        return;
+
+      }
+
+
+      if (!cards[id]) {
+
+        alert(
+          id +
+          " is not in the offline inventory on this phone."
+        );
+
+        return;
+
+      }
+
+
+      showCard(
+        cards[id]
+      );
+
+    }
+
+
+    function scanCard() {
+
+      alert(
+        "Camera scanner is next.\n\n" +
+        "First we're proving the offline inventory."
+      );
+
+    }
+
+
+    function syncInventory() {
+
+      if (!navigator.onLine) {
+
+        alert(
+          "You're offline.\n\n" +
+          "Reconnect to Wi-Fi or cellular service to sync."
+        );
+
+        return;
+
+      }
+
+
+      const button =
+        document.getElementById(
+          "syncButton"
+        );
+
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "SYNCING...";
+
+
+      window.dittoReceiveInventory =
+        function(payload) {
+
+          try {
+
+            if (
+              !payload ||
+              !payload.ok ||
+              !payload.cards
+            ) {
+
+              throw new Error(
+                payload &&
+                payload.error
+                  ? payload.error
+                  : "Invalid inventory response."
+              );
+
+            }
+
+
+            localStorage.setItem(
+              "dittoInventory",
+              JSON.stringify(
+                payload.cards
+              )
+            );
+
+
+            localStorage.setItem(
+              "dittoLastSync",
+              payload.syncedAt ||
+              new Date().toISOString()
+            );
+
+
+            updateInventoryStatus();
+
+
+            alert(
+              payload.count +
+              " cards synced to this phone."
+            );
+
+
+          } catch (error) {
+
+            alert(
+              "Ditto sync failed.\n\n" +
+              error.message
+            );
+
+
+          } finally {
+
+            button.disabled =
+              false;
+
+            button.textContent =
+              "↻ SYNC INVENTORY";
+
+            cleanupSyncScript();
+
+          }
+
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.id =
+        "dittoSyncScript";
+
+
+      script.onerror =
+        function() {
+
+          button.disabled =
+            false;
+
+          button.textContent =
+            "↻ SYNC INVENTORY";
+
+          cleanupSyncScript();
+
+
+          alert(
+            "Ditto could not reach the offline sync service."
+          );
+
+        };
+
+
+      script.src =
+        DITTO_SYNC_URL +
+        "?callback=dittoReceiveInventory" +
+        "&t=" +
+        Date.now();
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
+
+
+    function cleanupSyncScript() {
+
+      const oldScript =
+        document.getElementById(
+          "dittoSyncScript"
+        );
+
+
+      if (oldScript) {
+
+        oldScript.remove();
+
+      }
+
+    }
+
+
+    document
+      .getElementById(
+        "dittoId"
+      )
+      .addEventListener(
+        "keydown",
+        function(event) {
+
+          if (
+            event.key === "Enter"
+          ) {
+
+            lookupCard();
+
+          }
+
+        }
+      );
+
+
+    window.addEventListener(
+      "online",
+      updateConnectionStatus
+    );
+
+
+    window.addEventListener(
+      "offline",
+      updateConnectionStatus
+    );
+
+
+    updateConnectionStatus();
+
+    updateInventoryStatus();
+
+  </script>
+
+</body>
+</html>      margin: 8px 0 4px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #bbbbbb;
+      margin-bottom: 30px;
+    }
+
+    .statusBox {
+      background: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .statusTitle {
+      font-size: 13px;
+      color: #aaaaaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .statusValue {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .online {
+      color: #72e59a;
+    }
+
+    .offline {
+      color: #ffcf66;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 18px;
+      margin: 8px 0;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .scanButton {
+      background: #ff66b3;
+      color: #111111;
+    }
+
+    .syncButton {
+      background: #7dd3fc;
+      color: #111111;
+    }
+
+    .syncButton:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .lookup {
+      margin-top: 22px;
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      color: #aaaaaa;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #444444;
+      background: #111111;
+      color: #ffffff;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+
+    .lookupButton {
+      background: #333333;
+      color: #ffffff;
+      margin-top: 12px;
+    }
+
+    .card {
+      display: none;
+      margin-top: 22px;
+      background: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .cardTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dittoId {
+      display: inline-block;
+      background: #ff66b3;
+      color: #111111;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+    }
+
+    .cardStatus {
+      color: #7dd3fc;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .sold {
+      color: #ff8d8d;
+    }
+
+    .card h2 {
+      font-size: 28px;
+      margin: 18px 0 5px;
+      line-height: 1.1;
+    }
+
+    .identity {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .meta {
+      color: #bbbbbb;
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+
+    .physical {
+      margin-top: 18px;
+      padding: 15px;
+      border-radius: 14px;
+      background: #111111;
+    }
+
+    .smallTitle {
+      display: block;
+      color: #7dd3fc;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.7px;
+      margin-bottom: 6px;
+    }
+
+    .physical strong {
+      font-size: 17px;
+    }
+
+    .condition {
+      margin-top: 8px;
+      color: #bbbbbb;
+    }
+
+    .price {
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      background: #ff66b3;
+      color: #111111;
+    }
+
+    .price .smallTitle {
+      color: #111111;
+      opacity: 0.7;
+    }
+
+    .price strong {
+      display: block;
+      font-size: 32px;
+    }
+
+    .marketTitle {
+      color: #7dd3fc;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      margin: 22px 0 9px;
+    }
+
+    .marketGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .market {
+      background: #111111;
+      padding: 12px 8px;
+      border-radius: 13px;
+      min-width: 0;
+    }
+
+    .market span {
+      display: block;
+      color: #7dd3fc;
+      font-size: 10px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .market strong {
+      display: block;
+      font-size: 17px;
+      overflow-wrap: anywhere;
+    }
+
+    .extra {
+      margin-top: 14px;
+      padding: 14px;
+      background: #111111;
+      border-radius: 13px;
+      line-height: 1.45;
+    }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      color: #777777;
+      font-size: 12px;
+      line-height: 1.5;
+      padding-bottom: 30px;
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding: 12px;
+      }
+
+      .marketGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <div class="logo">🔴</div>
+
+    <h1>SCAN THE DITTO</h1>
+
+    <div class="subtitle">
+      Offline Card Lookup
+    </div>
+
+
+    <div class="statusBox">
+
+      <div class="statusTitle">
+        Connection
+      </div>
+
+      <div
+        id="connectionStatus"
+        class="statusValue"
+      >
+        Checking...
+      </div>
+
+    </div>
+
+
+    <div class="statusBox">
+
+      <div class="statusTitle">
+        Offline Inventory
+      </div>
+
+      <div
+        id="inventoryStatus"
+        class="statusValue"
+      >
+        No inventory synced yet
+      </div>
+
+    </div>
+
+
+    <button
+      class="scanButton"
+      onclick="scanCard()"
+    >
+      📷 SCAN CARD
+    </button>
+
+
+    <button
+      id="syncButton"
+      class="syncButton"
+      onclick="syncInventory()"
+    >
+      ↻ SYNC INVENTORY
+    </button>
+
+
+    <div class="lookup">
+
+      <label for="dittoId">
+        MANUAL DITTO ID
+      </label>
+
+      <input
+        id="dittoId"
+        type="text"
+        placeholder="D00001"
+        autocomplete="off"
+      >
+
+      <button
+        class="lookupButton"
+        onclick="lookupCard()"
+      >
+        LOOK UP CARD
+      </button>
+
+    </div>
+
+
+    <div
+      id="card"
+      class="card"
+    ></div>
+
+
+    <div class="footer">
+      Chasing Ditto<br>
+      Market sources inform the price. Ditto sets the price.
+    </div>
+
+  </div>
+
+
+  <script>
+
     const DITTO_APP_URL =
       "https://script.google.com/macros/s/AKfycbz0PH87cfp7_6jPS4NWdSiIOaslOqfFd5X5MBDwQe3xGec58ID5yVTTV9P6TPsuu7jS/exec";
 
