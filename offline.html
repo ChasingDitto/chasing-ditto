@@ -1,2458 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Scan the Ditto Offline</title>
 
-  <title>Scan the Ditto Offline</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:20px;
+  background:#111;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{max-width:520px;margin:auto}
+.logo{text-align:center;font-size:52px;margin-top:15px}
+h1{text-align:center;margin:5px 0;font-size:30px}
+.subtitle{text-align:center;color:#aaa;margin-bottom:25px}
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+.box,.lookup,.card{
+  background:#1e1e1e;
+  border:1px solid #333;
+  border-radius:16px;
+  padding:18px;
+  margin-bottom:16px;
+}
 
-    body {
-      margin: 0;
-      padding: 24px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111111;
-      color: #ffffff;
-      min-height: 100vh;
-    }
+.label{
+  color:#aaa;
+  font-size:12px;
+  letter-spacing:1px;
+  margin-bottom:7px;
+}
 
-    .app {
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
-    }
+.value{font-size:20px;font-weight:800}
+.online{color:#72e59a}
+.offline{color:#ffcf66}
 
-    .logo {
-      text-align: center;
-      font-size: 54px;
-      margin-top: 20px;
-    }
+button{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:18px;
+  margin:8px 0;
+  font-size:18px;
+  font-weight:900;
+}
 
-    h1 {
-      text-align: center;
-      margin: 8px 0 4px;
-      font-size: 30px;
-    }
+.scan{background:#ff66b3;color:#111}
+.sync{background:#7dd3fc;color:#111}
+.lookupButton{background:#333;color:#fff}
 
-    .subtitle {
-      text-align: center;
-      color: #bbbbbb;
-      margin-bottom: 30px;
-    }
+input{
+  width:100%;
+  padding:16px;
+  background:#111;
+  color:#fff;
+  border:1px solid #555;
+  border-radius:12px;
+  font-size:18px;
+  text-transform:uppercase;
+}
 
-    .statusBox {
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 18px;
-    }
+.lookup{margin-top:20px}
+.card{display:none;margin-top:20px}
 
-    .statusTitle {
-      font-size: 13px;
-      color: #aaaaaa;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
+.cardTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-    .statusValue {
-      font-size: 20px;
-      font-weight: 700;
-    }
+.id{
+  background:#ff66b3;
+  color:#111;
+  padding:7px 12px;
+  border-radius:999px;
+  font-weight:900;
+}
 
-    .online {
-      color: #72e59a;
-    }
+.status{
+  color:#7dd3fc;
+  font-size:13px;
+  font-weight:900;
+}
 
-    .offline {
-      color: #ffcf66;
-    }
+.card h2{
+  font-size:28px;
+  margin:18px 0 5px;
+}
 
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 16px;
-      padding: 18px;
-      margin: 8px 0;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-    }
+.identity{font-weight:700}
+.meta{color:#bbb;margin-top:5px}
 
-    .scanButton {
-      background: #ff66b3;
-      color: #111111;
-    }
+.physical{
+  margin-top:18px;
+  background:#111;
+  padding:15px;
+  border-radius:12px;
+}
 
-    .syncButton {
-      background: #7dd3fc;
-      color: #111111;
-    }
+.price{
+  margin-top:15px;
+  background:#ff66b3;
+  color:#111;
+  padding:18px;
+  border-radius:14px;
+}
 
-    .syncButton:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
+.price strong{
+  display:block;
+  font-size:30px;
+}
 
-    .lookup {
-      margin-top: 22px;
-      background: #1e1e1e;
-      border-radius: 16px;
-      padding: 18px;
-    }
+.marketTitle{
+  margin-top:20px;
+  color:#7dd3fc;
+  font-size:12px;
+  font-weight:900;
+}
 
-    label {
-      display: block;
-      color: #aaaaaa;
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
+.market{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:8px;
+}
 
-    input {
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #444444;
-      background: #111111;
-      color: #ffffff;
-      font-size: 18px;
-      text-transform: uppercase;
-    }
+.market div{
+  background:#111;
+  padding:12px 8px;
+  border-radius:12px;
+}
 
-    .lookupButton {
-      background: #333333;
-      color: #ffffff;
-      margin-top: 12px;
-    }
+.market span{
+  display:block;
+  color:#7dd3fc;
+  font-size:10px;
+  font-weight:900;
+}
 
-    .card {
-      display: none;
-      margin-top: 22px;
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 18px;
-      padding: 20px;
-    }
+.market strong{
+  display:block;
+  margin-top:5px;
+}
 
-    .cardTop {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
+.footer{
+  text-align:center;
+  color:#777;
+  font-size:12px;
+  margin:28px 0;
+}
 
-    .dittoId {
-      display: inline-block;
-      background: #ff66b3;
-      color: #111111;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-weight: 900;
-    }
-
-    .cardStatus {
-      color: #7dd3fc;
-      font-weight: 900;
-      font-size: 13px;
-    }
-
-    .sold {
-      color: #ff8d8d;
-    }
-
-    .card h2 {
-      font-size: 28px;
-      margin: 18px 0 5px;
-      line-height: 1.1;
-    }
-
-    .identity {
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .meta {
-      color: #bbbbbb;
-      margin-top: 5px;
-      line-height: 1.4;
-    }
-
-    .physical {
-      margin-top: 18px;
-      padding: 15px;
-      border-radius: 14px;
-      background: #111111;
-    }
-
-    .smallTitle {
-      display: block;
-      color: #7dd3fc;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.7px;
-      margin-bottom: 6px;
-    }
-
-    .physical strong {
-      font-size: 17px;
-    }
-
-    .condition {
-      margin-top: 8px;
-      color: #bbbbbb;
-    }
-
-    .price {
-      margin-top: 16px;
-      padding: 20px;
-      border-radius: 16px;
-      background: #ff66b3;
-      color: #111111;
-    }
-
-    .price .smallTitle {
-      color: #111111;
-      opacity: 0.7;
-    }
-
-    .price strong {
-      display: block;
-      font-size: 32px;
-    }
-
-    .marketTitle {
-      color: #7dd3fc;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0.8px;
-      margin: 22px 0 9px;
-    }
-
-    .marketGrid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .market {
-      background: #111111;
-      padding: 12px 8px;
-      border-radius: 13px;
-      min-width: 0;
-    }
-
-    .market span {
-      display: block;
-      color: #7dd3fc;
-      font-size: 10px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .market strong {
-      display: block;
-      font-size: 17px;
-      overflow-wrap: anywhere;
-    }
-
-    .extra {
-      margin-top: 14px;
-      padding: 14px;
-      background: #111111;
-      border-radius: 13px;
-      line-height: 1.45;
-    }
-
-    .footer {
-      margin-top: 28px;
-      text-align: center;
-      color: #777777;
-      font-size: 12px;
-      line-height: 1.5;
-      padding-bottom: 30px;
-    }
-
-    @media (max-width: 420px) {
-      body {
-        padding: 12px;
-      }
-
-      .marketGrid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+@media(max-width:420px){
+  body{padding:12px}
+  .market{grid-template-columns:1fr}
+}
+</style>
 </head>
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <div class="logo">🔴</div>
+  <div class="logo">🔴</div>
+  <h1>SCAN THE DITTO</h1>
+  <div class="subtitle">Offline Card Lookup</div>
 
-    <h1>SCAN THE DITTO</h1>
-
-    <div class="subtitle">
-      Offline Card Lookup
-    </div>
-
-
-    <div class="statusBox">
-
-      <div class="statusTitle">
-        Connection
-      </div>
-
-      <div
-        id="connectionStatus"
-        class="statusValue"
-      >
-        Checking...
-      </div>
-
-    </div>
-
-
-    <div class="statusBox">
-
-      <div class="statusTitle">
-        Offline Inventory
-      </div>
-
-      <div
-        id="inventoryStatus"
-        class="statusValue"
-      >
-        No inventory synced yet
-      </div>
-
-    </div>
-
-
-    <button
-      class="scanButton"
-      onclick="scanCard()"
-    >
-      📷 SCAN CARD
-    </button>
-
-
-    <button
-      id="syncButton"
-      class="syncButton"
-      onclick="syncInventory()"
-    >
-      ↻ SYNC INVENTORY
-    </button>
-
-
-    <div class="lookup">
-
-      <label for="dittoId">
-        MANUAL DITTO ID
-      </label>
-
-      <input
-        id="dittoId"
-        type="text"
-        placeholder="D00001"
-        autocomplete="off"
-      >
-
-      <button
-        class="lookupButton"
-        onclick="lookupCard()"
-      >
-        LOOK UP CARD
-      </button>
-
-    </div>
-
-
-    <div
-      id="card"
-      class="card"
-    ></div>
-
-
-    <div class="footer">
-      Chasing Ditto<br>
-      Market sources inform the price. Ditto sets the price.
-    </div>
-
+  <div class="box">
+    <div class="label">CONNECTION</div>
+    <div id="connection" class="value">Checking...</div>
   </div>
 
-
-  <script>
-
-    const DITTO_SYNC_URL =
-      "https://script.google.com/macros/s/AKfycbyNRAIqNR_Hnupku-BTr-E272OcC-w45qRACcvUjDVha72KxZGU9aD4hqWc38QNuSwsFA/exec";
-
-
-    function updateConnectionStatus() {
-
-      const el =
-        document.getElementById(
-          "connectionStatus"
-        );
-
-
-      if (navigator.onLine) {
-
-        el.textContent =
-          "ONLINE";
-
-        el.className =
-          "statusValue online";
-
-      } else {
-
-        el.textContent =
-          "OFFLINE — DITTO STILL LIVES";
-
-        el.className =
-          "statusValue offline";
-
-      }
-
-    }
-
-
-    function updateInventoryStatus() {
-
-      const inventory =
-        localStorage.getItem(
-          "dittoInventory"
-        );
-
-      const synced =
-        localStorage.getItem(
-          "dittoLastSync"
-        );
-
-      const el =
-        document.getElementById(
-          "inventoryStatus"
-        );
-
-
-      if (!inventory) {
-
-        el.textContent =
-          "No inventory synced yet";
-
-        return;
-
-      }
-
-
-      try {
-
-        const cards =
-          JSON.parse(inventory);
-
-        const count =
-          Object.keys(cards).length;
-
-
-        if (synced) {
-
-          const date =
-            new Date(synced);
-
-          el.textContent =
-            count +
-            " cards • Last sync " +
-            date.toLocaleString();
-
-        } else {
-
-          el.textContent =
-            count +
-            " cards stored on this phone";
-
-        }
-
-      } catch (error) {
-
-        el.textContent =
-          "Offline inventory needs to be synced";
-
-      }
-
-    }
-
-
-    function normalizeDittoId(value) {
-
-      let id =
-        String(value || "")
-          .trim()
-          .toUpperCase();
-
-
-      const urlMatch =
-        id.match(
-          /[?&]ID=(D?\d+)/i
-        );
-
-
-      if (urlMatch) {
-
-        id =
-          urlMatch[1].toUpperCase();
-
-      }
-
-
-      id =
-        id.replace(/^D/, "");
-
-
-      if (!/^\d+$/.test(id)) {
-
-        return "";
-
-      }
-
-
-      return (
-        "D" +
-        id.padStart(5, "0")
-      );
-
-    }
-
-
-    function money(value) {
-
-      const number =
-        Number(value);
-
-
-      if (
-        value === "" ||
-        value === null ||
-        typeof value === "undefined" ||
-        !isFinite(number) ||
-        number <= 0
-      ) {
-
-        return "—";
-
-      }
-
-
-      return (
-        "$" +
-        number.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        )
-      );
-
-    }
-
-
-    function escapeHtml(value) {
-
-      return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-    }
-
-
-    function physicalCardText(card) {
-
-      if (
-        String(card.itemType || "")
-          .toLowerCase() === "graded"
-      ) {
-
-        const parts = [];
-
-        if (card.grader) {
-          parts.push(card.grader);
-        }
-
-        if (card.grade) {
-          parts.push(card.grade);
-        }
-
-        return (
-          parts.join(" ") ||
-          "Graded"
-        );
-
-      }
-
-
-      return "Raw";
-
-    }
-
-
-    function showCard(card) {
-
-      const el =
-        document.getElementById(
-          "card"
-        );
-
-
-      const status =
-        String(
-          card.status || "ACTIVE"
-        ).toUpperCase();
-
-
-      const identityParts = [];
-
-      if (card.set) {
-        identityParts.push(card.set);
-      }
-
-      if (card.number) {
-        identityParts.push(card.number);
-      }
-
-
-      const metaParts =
-        [
-          card.game,
-          card.language,
-          card.variant
-        ].filter(Boolean);
-
-
-      let extras = "";
-
-
-      if (card.location) {
-
-        extras +=
-          '<div class="extra">' +
-          '<span class="smallTitle">LOCATION</span>' +
-          escapeHtml(card.location) +
-          '</div>';
-
-      }
-
-
-      if (card.notes) {
-
-        extras +=
-          '<div class="extra">' +
-          '<span class="smallTitle">NOTES</span>' +
-          escapeHtml(card.notes) +
-          '</div>';
-
-      }
-
-
-      el.innerHTML =
-
-        '<div class="cardTop">' +
-
-          '<div class="dittoId">' +
-            escapeHtml(card.id) +
-          '</div>' +
-
-          '<div class="cardStatus ' +
-            (
-              status === "SOLD"
-                ? "sold"
-                : ""
-            ) +
-          '">' +
-            escapeHtml(status) +
-          '</div>' +
-
-        '</div>' +
-
-
-        '<h2>' +
-          escapeHtml(card.name) +
-        '</h2>' +
-
-
-        '<div class="identity">' +
-          escapeHtml(
-            identityParts.join(" · ")
-          ) +
-        '</div>' +
-
-
-        '<div class="meta">' +
-          escapeHtml(
-            metaParts.join(" · ")
-          ) +
-        '</div>' +
-
-
-        '<div class="physical">' +
-
-          '<span class="smallTitle">' +
-            'PHYSICAL CARD' +
-          '</span>' +
-
-          '<strong>' +
-            escapeHtml(
-              physicalCardText(card)
-            ) +
-          '</strong>' +
-
-          (
-            card.condition
-              ? '<div class="condition">' +
-                  'Condition: <b>' +
-                  escapeHtml(
-                    card.condition
-                  ) +
-                  '</b>' +
-                '</div>'
-              : ''
-          ) +
-
-        '</div>' +
-
-
-        '<div class="price">' +
-
-          '<span class="smallTitle">' +
-            'DITTO PRICE' +
-          '</span>' +
-
-          '<strong>' +
-            (
-              card.ask
-                ? money(card.ask)
-                : 'NOT PRICED YET'
-            ) +
-          '</strong>' +
-
-        '</div>' +
-
-
-        '<div class="marketTitle">' +
-          'MARKET REFERENCES' +
-        '</div>' +
-
-
-        '<div class="marketGrid">' +
-
-          '<div class="market">' +
-            '<span>COLLECTR</span>' +
-            '<strong>' +
-              money(card.collectr) +
-            '</strong>' +
-          '</div>' +
-
-          '<div class="market">' +
-            '<span>PRICECHARTING</span>' +
-            '<strong>' +
-              money(card.pcReference) +
-            '</strong>' +
-          '</div>' +
-
-          '<div class="market">' +
-            '<span>TCGPLAYER</span>' +
-            '<strong>' +
-              (
-                card.tcgRef
-                  ? 'LINKED'
-                  : '—'
-              ) +
-            '</strong>' +
-          '</div>' +
-
-        '</div>' +
-
-        extras;
-
-
-      el.style.display =
-        "block";
-
-
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-    }
-
-
-    function lookupCard() {
-
-      const input =
-        document
-          .getElementById(
-            "dittoId"
-          )
-          .value;
-
-
-      const id =
-        normalizeDittoId(input);
-
-
-      if (!id) {
-
-        alert(
-          "Enter a valid Ditto ID."
-        );
-
-        return;
-
-      }
-
-
-      const inventory =
-        localStorage.getItem(
-          "dittoInventory"
-        );
-
-
-      if (!inventory) {
-
-        alert(
-          "No offline inventory has been synced to this phone yet."
-        );
-
-        return;
-
-      }
-
-
-      let cards;
-
-
-      try {
-
-        cards =
-          JSON.parse(inventory);
-
-      } catch (error) {
-
-        alert(
-          "The offline inventory could not be read."
-        );
-
-        return;
-
-      }
-
-
-      if (!cards[id]) {
-
-        alert(
-          id +
-          " is not in the offline inventory on this phone."
-        );
-
-        return;
-
-      }
-
-
-      showCard(
-        cards[id]
-      );
-
-    }
-
-
-    function scanCard() {
-
-      alert(
-        "Camera scanner is next.\n\n" +
-        "First we're proving the offline inventory."
-      );
-
-    }
-
-
-    function syncInventory() {
-
-      if (!navigator.onLine) {
-
-        alert(
-          "You're offline.\n\n" +
-          "Reconnect to Wi-Fi or cellular service to sync."
-        );
-
-        return;
-
-      }
-
-
-      const button =
-        document.getElementById(
-          "syncButton"
-        );
-
-
-      button.disabled =
-        true;
-
-      button.textContent =
-        "SYNCING...";
-
-
-      window.dittoReceiveInventory =
-        function(payload) {
-
-          try {
-
-            if (
-              !payload ||
-              !payload.ok ||
-              !payload.cards
-            ) {
-
-              throw new Error(
-                payload &&
-                payload.error
-                  ? payload.error
-                  : "Invalid inventory response."
-              );
-
-            }
-
-
-            localStorage.setItem(
-              "dittoInventory",
-              JSON.stringify(
-                payload.cards
-              )
-            );
-
-
-            localStorage.setItem(
-              "dittoLastSync",
-              payload.syncedAt ||
-              new Date().toISOString()
-            );
-
-
-            updateInventoryStatus();
-
-
-            alert(
-              payload.count +
-              " cards synced to this phone."
-            );
-
-
-          } catch (error) {
-
-            alert(
-              "Ditto sync failed.\n\n" +
-              error.message
-            );
-
-
-          } finally {
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "↻ SYNC INVENTORY";
-
-            cleanupSyncScript();
-
-          }
-
-        };
-
-
-      const script =
-        document.createElement(
-          "script"
-        );
-
-
-      script.id =
-        "dittoSyncScript";
-
-
-      script.onerror =
-        function() {
-
-          button.disabled =
-            false;
-
-          button.textContent =
-            "↻ SYNC INVENTORY";
-
-          cleanupSyncScript();
-
-
-          alert(
-            "Ditto could not reach the offline sync service."
-          );
-
-        };
-
-
-      script.src =
-        DITTO_SYNC_URL +
-        "?callback=dittoReceiveInventory" +
-        "&t=" +
-        Date.now();
-
-
-      document.body.appendChild(
-        script
-      );
-
-    }
-
-
-    function cleanupSyncScript() {
-
-      const oldScript =
-        document.getElementById(
-          "dittoSyncScript"
-        );
-
-
-      if (oldScript) {
-
-        oldScript.remove();
-
-      }
-
-    }
-
-
-    document
-      .getElementById(
-        "dittoId"
-      )
-      .addEventListener(
-        "keydown",
-        function(event) {
-
-          if (
-            event.key === "Enter"
-          ) {
-
-            lookupCard();
-
-          }
-
-        }
-      );
-
-
-    window.addEventListener(
-      "online",
-      updateConnectionStatus
-    );
-
-
-    window.addEventListener(
-      "offline",
-      updateConnectionStatus
-    );
-
-
-    updateConnectionStatus();
-
-    updateInventoryStatus();
-
-  </script>
-
-</body>
-</html>      margin: 8px 0 4px;
-      font-size: 30px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #bbbbbb;
-      margin-bottom: 30px;
-    }
-
-    .statusBox {
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 18px;
-    }
-
-    .statusTitle {
-      font-size: 13px;
-      color: #aaaaaa;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
-
-    .statusValue {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .online {
-      color: #72e59a;
-    }
-
-    .offline {
-      color: #ffcf66;
-    }
-
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 16px;
-      padding: 18px;
-      margin: 8px 0;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .scanButton {
-      background: #ff66b3;
-      color: #111111;
-    }
-
-    .syncButton {
-      background: #7dd3fc;
-      color: #111111;
-    }
-
-    .syncButton:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .lookup {
-      margin-top: 22px;
-      background: #1e1e1e;
-      border-radius: 16px;
-      padding: 18px;
-    }
-
-    label {
-      display: block;
-      color: #aaaaaa;
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
-    input {
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #444444;
-      background: #111111;
-      color: #ffffff;
-      font-size: 18px;
-      text-transform: uppercase;
-    }
-
-    .lookupButton {
-      background: #333333;
-      color: #ffffff;
-      margin-top: 12px;
-    }
-
-    .card {
-      display: none;
-      margin-top: 22px;
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 18px;
-      padding: 20px;
-    }
-
-    .cardTop {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .dittoId {
-      display: inline-block;
-      background: #ff66b3;
-      color: #111111;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-weight: 900;
-    }
-
-    .cardStatus {
-      color: #7dd3fc;
-      font-weight: 900;
-      font-size: 13px;
-    }
-
-    .sold {
-      color: #ff8d8d;
-    }
-
-    .card h2 {
-      font-size: 28px;
-      margin: 18px 0 5px;
-      line-height: 1.1;
-    }
-
-    .identity {
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .meta {
-      color: #bbbbbb;
-      margin-top: 5px;
-      line-height: 1.4;
-    }
-
-    .physical {
-      margin-top: 18px;
-      padding: 15px;
-      border-radius: 14px;
-      background: #111111;
-    }
-
-    .smallTitle {
-      display: block;
-      color: #7dd3fc;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.7px;
-      margin-bottom: 6px;
-    }
-
-    .physical strong {
-      font-size: 17px;
-    }
-
-    .condition {
-      margin-top: 8px;
-      color: #bbbbbb;
-    }
-
-    .price {
-      margin-top: 16px;
-      padding: 20px;
-      border-radius: 16px;
-      background: #ff66b3;
-      color: #111111;
-    }
-
-    .price .smallTitle {
-      color: #111111;
-      opacity: 0.7;
-    }
-
-    .price strong {
-      display: block;
-      font-size: 32px;
-    }
-
-    .marketTitle {
-      color: #7dd3fc;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0.8px;
-      margin: 22px 0 9px;
-    }
-
-    .marketGrid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .market {
-      background: #111111;
-      padding: 12px 8px;
-      border-radius: 13px;
-      min-width: 0;
-    }
-
-    .market span {
-      display: block;
-      color: #7dd3fc;
-      font-size: 10px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .market strong {
-      display: block;
-      font-size: 17px;
-      overflow-wrap: anywhere;
-    }
-
-    .extra {
-      margin-top: 14px;
-      padding: 14px;
-      background: #111111;
-      border-radius: 13px;
-      line-height: 1.45;
-    }
-
-    .footer {
-      margin-top: 28px;
-      text-align: center;
-      color: #777777;
-      font-size: 12px;
-      line-height: 1.5;
-      padding-bottom: 30px;
-    }
-
-    @media (max-width: 420px) {
-      body {
-        padding: 12px;
-      }
-
-      .marketGrid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="app">
-
-    <div class="logo">🔴</div>
-
-    <h1>SCAN THE DITTO</h1>
-
-    <div class="subtitle">
-      Offline Card Lookup
-    </div>
-
-
-    <div class="statusBox">
-
-      <div class="statusTitle">
-        Connection
-      </div>
-
-      <div
-        id="connectionStatus"
-        class="statusValue"
-      >
-        Checking...
-      </div>
-
-    </div>
-
-
-    <div class="statusBox">
-
-      <div class="statusTitle">
-        Offline Inventory
-      </div>
-
-      <div
-        id="inventoryStatus"
-        class="statusValue"
-      >
-        No inventory synced yet
-      </div>
-
-    </div>
-
-
-    <button
-      class="scanButton"
-      onclick="scanCard()"
-    >
-      📷 SCAN CARD
-    </button>
-
-
-    <button
-      id="syncButton"
-      class="syncButton"
-      onclick="syncInventory()"
-    >
-      ↻ SYNC INVENTORY
-    </button>
-
-
-    <div class="lookup">
-
-      <label for="dittoId">
-        MANUAL DITTO ID
-      </label>
-
-      <input
-        id="dittoId"
-        type="text"
-        placeholder="D00001"
-        autocomplete="off"
-      >
-
-      <button
-        class="lookupButton"
-        onclick="lookupCard()"
-      >
-        LOOK UP CARD
-      </button>
-
-    </div>
-
-
-    <div
-      id="card"
-      class="card"
-    ></div>
-
-
-    <div class="footer">
-      Chasing Ditto<br>
-      Market sources inform the price. Ditto sets the price.
-    </div>
-
+  <div class="box">
+    <div class="label">OFFLINE INVENTORY</div>
+    <div id="inventory" class="value">No inventory synced yet</div>
   </div>
 
-
-  <script>
-
-    const DITTO_APP_URL =
-      "https://script.google.com/macros/s/AKfycbz0PH87cfp7_6jPS4NWdSiIOaslOqfFd5X5MBDwQe3xGec58ID5yVTTV9P6TPsuu7jS/exec";
-
-
-    function updateConnectionStatus() {
-
-      const el =
-        document.getElementById(
-          "connectionStatus"
-        );
-
-
-      if (navigator.onLine) {
-
-        el.textContent =
-          "ONLINE";
-
-        el.className =
-          "statusValue online";
-
-      } else {
-
-        el.textContent =
-          "OFFLINE — DITTO STILL LIVES";
-
-        el.className =
-          "statusValue offline";
-
-      }
-
-    }
-
-
-    function updateInventoryStatus() {
-
-      const inventory =
-        localStorage.getItem(
-          "dittoInventory"
-        );
-
-      const synced =
-        localStorage.getItem(
-          "dittoLastSync"
-        );
-
-      const el =
-        document.getElementById(
-          "inventoryStatus"
-        );
-
-
-      if (!inventory) {
-
-        el.textContent =
-          "No inventory synced yet";
-
-        return;
-
-      }
-
-
-      try {
-
-        const cards =
-          JSON.parse(inventory);
-
-        const count =
-          Object.keys(cards).length;
-
-
-        if (synced) {
-
-          const date =
-            new Date(synced);
-
-          el.textContent =
-            count +
-            " cards • Last sync " +
-            date.toLocaleString();
-
-        } else {
-
-          el.textContent =
-            count +
-            " cards stored on this phone";
-
-        }
-
-      } catch (error) {
-
-        el.textContent =
-          "Offline inventory needs to be synced";
-
-      }
-
-    }
-
-
-    function normalizeDittoId(value) {
-
-      let id =
-        String(value || "")
-          .trim()
-          .toUpperCase();
-
-
-      const urlMatch =
-        id.match(
-          /[?&]ID=(D?\d+)/i
-        );
-
-
-      if (urlMatch) {
-
-        id =
-          urlMatch[1].toUpperCase();
-
-      }
-
-
-      id =
-        id.replace(/^D/, "");
-
-
-      if (!/^\d+$/.test(id)) {
-
-        return "";
-
-      }
-
-
-      return (
-        "D" +
-        id.padStart(5, "0")
-      );
-
-    }
-
-
-    function money(value) {
-
-      const number =
-        Number(value);
-
-
-      if (
-        !value ||
-        !isFinite(number) ||
-        number <= 0
-      ) {
-
-        return "—";
-
-      }
-
-
-      return (
-        "$" +
-        number.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        )
-      );
-
-    }
-
-
-    function escapeHtml(value) {
-
-      return String(value || "")
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-        .replace(
-          /</g,
-          "&lt;"
-        )
-        .replace(
-          />/g,
-          "&gt;"
-        )
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
-    }
-
-
-    function physicalCardText(card) {
-
-      if (
-        String(card.itemType || "")
-          .toLowerCase() === "graded"
-      ) {
-
-        const parts = [];
-
-        if (card.grader) {
-          parts.push(card.grader);
-        }
-
-        if (card.grade) {
-          parts.push(card.grade);
-        }
-
-        return (
-          parts.join(" ") ||
-          "Graded"
-        );
-
-      }
-
-
-      return "Raw";
-
-    }
-
-
-    function showCard(card) {
-
-      const el =
-        document.getElementById(
-          "card"
-        );
-
-
-      const status =
-        String(
-          card.status || "ACTIVE"
-        ).toUpperCase();
-
-
-      const identity =
-        escapeHtml(card.set) +
-        (
-          card.number
-            ? " · " +
-              escapeHtml(card.number)
-            : ""
-        );
-
-
-      const metaParts =
-        [
-          card.game,
-          card.language,
-          card.variant
-        ].filter(Boolean);
-
-
-      let extras = "";
-
-
-      if (card.location) {
-
-        extras +=
-          '<div class="extra">' +
-          '<span class="smallTitle">' +
-          'LOCATION' +
-          '</span>' +
-          escapeHtml(card.location) +
-          '</div>';
-
-      }
-
-
-      if (card.notes) {
-
-        extras +=
-          '<div class="extra">' +
-          '<span class="smallTitle">' +
-          'NOTES' +
-          '</span>' +
-          escapeHtml(card.notes) +
-          '</div>';
-
-      }
-
-
-      el.innerHTML =
-
-        '<div class="cardTop">' +
-
-          '<div class="dittoId">' +
-            escapeHtml(card.id) +
-          '</div>' +
-
-          '<div class="cardStatus ' +
-            (
-              status === "SOLD"
-                ? "sold"
-                : ""
-            ) +
-          '">' +
-            escapeHtml(status) +
-          '</div>' +
-
-        '</div>' +
-
-
-        '<h2>' +
-          escapeHtml(card.name) +
-        '</h2>' +
-
-
-        '<div class="identity">' +
-          identity +
-        '</div>' +
-
-
-        '<div class="meta">' +
-          escapeHtml(
-            metaParts.join(" · ")
-          ) +
-        '</div>' +
-
-
-        '<div class="physical">' +
-
-          '<span class="smallTitle">' +
-            'PHYSICAL CARD' +
-          '</span>' +
-
-          '<strong>' +
-            escapeHtml(
-              physicalCardText(card)
-            ) +
-          '</strong>' +
-
-          (
-            card.condition
-              ? '<div class="condition">' +
-                  'Condition: <b>' +
-                  escapeHtml(
-                    card.condition
-                  ) +
-                  '</b>' +
-                '</div>'
-              : ''
-          ) +
-
-        '</div>' +
-
-
-        '<div class="price">' +
-
-          '<span class="smallTitle">' +
-            'DITTO PRICE' +
-          '</span>' +
-
-          '<strong>' +
-            (
-              card.ask
-                ? money(card.ask)
-                : 'NOT PRICED YET'
-            ) +
-          '</strong>' +
-
-        '</div>' +
-
-
-        '<div class="marketTitle">' +
-          'MARKET REFERENCES' +
-        '</div>' +
-
-
-        '<div class="marketGrid">' +
-
-          '<div class="market">' +
-            '<span>COLLECTR</span>' +
-            '<strong>' +
-              money(card.collectr) +
-            '</strong>' +
-          '</div>' +
-
-          '<div class="market">' +
-            '<span>PRICECHARTING</span>' +
-            '<strong>' +
-              money(card.pcReference) +
-            '</strong>' +
-          '</div>' +
-
-          '<div class="market">' +
-            '<span>TCGPLAYER</span>' +
-            '<strong>' +
-              (
-                card.tcgRef
-                  ? 'LINKED'
-                  : '—'
-              ) +
-            '</strong>' +
-          '</div>' +
-
-        '</div>' +
-
-        extras;
-
-
-      el.style.display =
-        "block";
-
-
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-    }
-
-
-    function lookupCard() {
-
-      const input =
-        document
-          .getElementById(
-            "dittoId"
-          )
-          .value;
-
-
-      const id =
-        normalizeDittoId(input);
-
-
-      if (!id) {
-
-        alert(
-          "Enter a valid Ditto ID."
-        );
-
-        return;
-
-      }
-
-
-      const inventory =
-        localStorage.getItem(
-          "dittoInventory"
-        );
-
-
-      if (!inventory) {
-
-        alert(
-          "No offline inventory has been synced to this phone yet."
-        );
-
-        return;
-
-      }
-
-
-      let cards;
-
-
-      try {
-
-        cards =
-          JSON.parse(inventory);
-
-      } catch (error) {
-
-        alert(
-          "The offline inventory could not be read."
-        );
-
-        return;
-
-      }
-
-
-      if (!cards[id]) {
-
-        alert(
-          id +
-          " is not in the offline inventory on this phone."
-        );
-
-        return;
-
-      }
-
-
-      showCard(
-        cards[id]
-      );
-
-    }
-
-
-    function scanCard() {
-
-      alert(
-        "Camera scanner is next.\n\n" +
-        "First we're proving the offline inventory."
-      );
-
-    }
-
-
-    function syncInventory() {
-
-      if (!navigator.onLine) {
-
-        alert(
-          "You're offline.\n\n" +
-          "Reconnect to Wi-Fi or cellular service to sync."
-        );
-
-        return;
-
-      }
-
-
-      const button =
-        document.getElementById(
-          "syncButton"
-        );
-
-
-      button.disabled =
-        true;
-
-      button.textContent =
-        "SYNCING...";
-
-
-      window.dittoReceiveInventory =
-        function(payload) {
-
-          try {
-
-            if (
-              !payload ||
-              !payload.ok ||
-              !payload.cards
-            ) {
-
-              throw new Error(
-                "Invalid inventory response."
-              );
-
-            }
-
-
-            localStorage.setItem(
-              "dittoInventory",
-              JSON.stringify(
-                payload.cards
-              )
-            );
-
-
-            localStorage.setItem(
-              "dittoLastSync",
-              payload.syncedAt ||
-              new Date().toISOString()
-            );
-
-
-            updateInventoryStatus();
-
-
-            alert(
-              payload.count +
-              " cards synced to this phone."
-            );
-
-          } catch (error) {
-
-            alert(
-              "Ditto sync failed.\n\n" +
-              error.message
-            );
-
-          } finally {
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "↻ SYNC INVENTORY";
-
-            cleanupSyncScript();
-
-          }
-
-        };
-
-
-      const script =
-        document.createElement(
-          "script"
-        );
-
-
-      script.id =
-        "dittoSyncScript";
-
-
-      script.onerror =
-        function() {
-
-          button.disabled =
-            false;
-
-          button.textContent =
-            "↻ SYNC INVENTORY";
-
-          cleanupSyncScript();
-
-
-          alert(
-            "Ditto could not reach the V4 inventory service."
-          );
-
-        };
-
-
-      script.src =
-        DITTO_APP_URL +
-        "?mode=offline-sync" +
-        "&callback=dittoReceiveInventory" +
-        "&t=" +
-        Date.now();
-
-
-      document.body.appendChild(
-        script
-      );
-
-    }
-
-
-    function cleanupSyncScript() {
-
-      const oldScript =
-        document.getElementById(
-          "dittoSyncScript"
-        );
-
-
-      if (oldScript) {
-
-        oldScript.remove();
-
-      }
-
-    }
-
-
-    document
-      .getElementById(
-        "dittoId"
-      )
-      .addEventListener(
-        "keydown",
-        function(event) {
-
-          if (
-            event.key === "Enter"
-          ) {
-
-            lookupCard();
-
-          }
-
-        }
-      );
-
-
-    window.addEventListener(
-      "online",
-      updateConnectionStatus
-    );
-
-
-    window.addEventListener(
-      "offline",
-      updateConnectionStatus
-    );
-
-
-    updateConnectionStatus();
-
-    updateInventoryStatus();
-
-  </script>
-
-</body>
-</html>      margin: 8px 0 4px;
-      font-size: 30px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #bbbbbb;
-      margin-bottom: 30px;
-    }
-
-    .status {
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 18px;
-    }
-
-    .status-title {
-      font-size: 13px;
-      color: #aaaaaa;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
-
-    .status-value {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 16px;
-      padding: 18px;
-      margin: 8px 0;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .scan-button {
-      background: #ff66b3;
-      color: #111111;
-    }
-
-    .sync-button {
-      background: #7dd3fc;
-      color: #111111;
-    }
-
-    .lookup {
-      margin-top: 22px;
-      background: #1e1e1e;
-      border-radius: 16px;
-      padding: 18px;
-    }
-
-    label {
-      display: block;
-      color: #aaaaaa;
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
-    input {
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #444444;
-      background: #111111;
-      color: #ffffff;
-      font-size: 18px;
-      text-transform: uppercase;
-    }
-
-    .lookup-button {
-      background: #333333;
-      color: #ffffff;
-      margin-top: 12px;
-    }
-
-    .footer {
-      margin-top: 28px;
-      text-align: center;
-      color: #777777;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .online {
-      color: #72e59a;
-    }
-
-    .offline {
-      color: #ffcf66;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="app">
-
-    <div class="logo">🔴</div>
-
-    <h1>SCAN THE DITTO</h1>
-
-    <div class="subtitle">
-      Offline Card Lookup
-    </div>
-
-    <div class="status">
-      <div class="status-title">Connection</div>
-      <div id="connectionStatus" class="status-value">
-        Checking...
-      </div>
-    </div>
-
-    <div class="status">
-      <div class="status-title">Offline Inventory</div>
-      <div id="inventoryStatus" class="status-value">
-        No inventory synced yet
-      </div>
-    </div>
-
-    <button class="scan-button" onclick="scanCard()">
-      📷 SCAN CARD
+  <button class="scan" onclick="scanCard()">📷 SCAN CARD</button>
+
+  <button id="syncButton" class="sync" onclick="syncInventory()">
+    ↻ SYNC INVENTORY
+  </button>
+
+  <div class="lookup">
+    <div class="label">MANUAL DITTO ID</div>
+
+    <input
+      id="dittoId"
+      placeholder="D00001"
+      autocomplete="off"
+    >
+
+    <button class="lookupButton" onclick="lookupCard()">
+      LOOK UP CARD
     </button>
-
-    <button class="sync-button" onclick="syncInventory()">
-      ↻ SYNC INVENTORY
-    </button>
-
-    <div class="lookup">
-
-      <label for="dittoId">
-        MANUAL DITTO ID
-      </label>
-
-      <input
-        id="dittoId"
-        type="text"
-        placeholder="D00001"
-        autocomplete="off"
-      >
-
-      <button class="lookup-button" onclick="lookupCard()">
-        LOOK UP CARD
-      </button>
-
-    </div>
-
-    <div class="footer">
-      Chasing Ditto<br>
-      Market sources inform the price. Ditto sets the price.
-    </div>
-
   </div>
 
-  <script>
+  <div id="card" class="card"></div>
 
-    function updateConnectionStatus() {
-      const el = document.getElementById("connectionStatus");
+  <div class="footer">
+    Chasing Ditto<br>
+    Market sources inform the price. Ditto sets the price.
+  </div>
 
-      if (navigator.onLine) {
-        el.textContent = "ONLINE";
-        el.className = "status-value online";
-      } else {
-        el.textContent = "OFFLINE — DITTO STILL LIVES";
-        el.className = "status-value offline";
+</div>
+
+<script>
+const SYNC_URL =
+"https://script.google.com/macros/s/AKfycbyNRAIqNR_Hnupku-BTr-E272OcC-w45qRACcvUjDVha72KxZGU9aD4hqWc38QNuSwsFA/exec";
+
+
+function updateConnection(){
+  const el=document.getElementById("connection");
+
+  if(navigator.onLine){
+    el.textContent="ONLINE";
+    el.className="value online";
+  }else{
+    el.textContent="OFFLINE — DITTO STILL LIVES";
+    el.className="value offline";
+  }
+}
+
+
+function updateInventory(){
+  const raw=localStorage.getItem("dittoInventory");
+  const last=localStorage.getItem("dittoLastSync");
+  const el=document.getElementById("inventory");
+
+  if(!raw){
+    el.textContent="No inventory synced yet";
+    return;
+  }
+
+  try{
+    const cards=JSON.parse(raw);
+    const count=Object.keys(cards).length;
+
+    el.textContent=count+" cards stored on this device";
+
+    if(last){
+      el.textContent+=" • "+new Date(last).toLocaleString();
+    }
+  }catch(err){
+    el.textContent="Inventory needs to be synced again";
+  }
+}
+
+
+function normalizeId(value){
+  let id=String(value||"").trim().toUpperCase();
+
+  const match=id.match(/[?&]id=(D?\d+)/i);
+  if(match) id=match[1];
+
+  id=id.replace(/^D/,"");
+
+  if(!/^\d+$/.test(id)) return "";
+
+  return "D"+id.padStart(5,"0");
+}
+
+
+function money(value){
+  const n=Number(value);
+
+  if(!value || !isFinite(n) || n<=0) return "—";
+
+  return "$"+n.toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
+}
+
+
+function esc(value){
+  return String(value||"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+function showCard(card){
+  const el=document.getElementById("card");
+
+  const physical=
+    String(card.itemType||"").toLowerCase()==="graded"
+      ? [card.grader,card.grade].filter(Boolean).join(" ") || "Graded"
+      : "Raw";
+
+  const identity=
+    [card.set,card.number].filter(Boolean).join(" · ");
+
+  const meta=
+    [card.game,card.language,card.variant].filter(Boolean).join(" · ");
+
+  el.innerHTML=`
+    <div class="cardTop">
+      <div class="id">${esc(card.id)}</div>
+      <div class="status">${esc(card.status||"ACTIVE")}</div>
+    </div>
+
+    <h2>${esc(card.name)}</h2>
+
+    <div class="identity">${esc(identity)}</div>
+    <div class="meta">${esc(meta)}</div>
+
+    <div class="physical">
+      <div class="label">PHYSICAL CARD</div>
+      <strong>${esc(physical)}</strong>
+      ${
+        card.condition
+        ? `<div class="meta">Condition: <b>${esc(card.condition)}</b></div>`
+        : ""
       }
+    </div>
+
+    <div class="price">
+      <div class="label" style="color:#111">DITTO PRICE</div>
+      <strong>${card.ask ? money(card.ask) : "NOT PRICED YET"}</strong>
+    </div>
+
+    <div class="marketTitle">MARKET REFERENCES</div>
+
+    <div class="market">
+      <div>
+        <span>COLLECTR</span>
+        <strong>${money(card.collectr)}</strong>
+      </div>
+
+      <div>
+        <span>PRICECHARTING</span>
+        <strong>${money(card.pcReference)}</strong>
+      </div>
+
+      <div>
+        <span>TCGPLAYER</span>
+        <strong>${card.tcgRef ? "LINKED" : "—"}</strong>
+      </div>
+    </div>
+  `;
+
+  el.style.display="block";
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+
+function lookupCard(){
+  const id=normalizeId(
+    document.getElementById("dittoId").value
+  );
+
+  if(!id){
+    alert("Enter a valid Ditto ID.");
+    return;
+  }
+
+  const raw=localStorage.getItem("dittoInventory");
+
+  if(!raw){
+    alert("No offline inventory has been synced yet.");
+    return;
+  }
+
+  try{
+    const cards=JSON.parse(raw);
+
+    if(!cards[id]){
+      alert(id+" is not stored on this device.");
+      return;
     }
 
+    showCard(cards[id]);
 
-    function updateInventoryStatus() {
-      const inventory = localStorage.getItem("dittoInventory");
-      const synced = localStorage.getItem("dittoLastSync");
-
-      const el = document.getElementById("inventoryStatus");
-
-      if (!inventory) {
-        el.textContent = "No inventory synced yet";
-        return;
-      }
-
-      try {
-        const cards = JSON.parse(inventory);
-        const count = Object.keys(cards).length;
-
-        if (synced) {
-          const date = new Date(synced);
-
-          el.textContent =
-            count +
-            " cards • Last sync " +
-            date.toLocaleString();
-        } else {
-          el.textContent =
-            count + " cards stored on this phone";
-        }
-
-      } catch (error) {
-        el.textContent = "Offline inventory needs to be synced";
-      }
-    }
+  }catch(err){
+    alert("Offline inventory could not be read.");
+  }
+}
 
 
-    function normalizeDittoId(value) {
-      let id = String(value || "")
-        .trim()
-        .toUpperCase();
+function syncInventory(){
+  if(!navigator.onLine){
+    alert("Reconnect to the internet before syncing.");
+    return;
+  }
 
-      const urlMatch = id.match(/[?&]ID=(D?\d+)/i);
+  const button=document.getElementById("syncButton");
 
-      if (urlMatch) {
-        id = urlMatch[1].toUpperCase();
-      }
+  button.disabled=true;
+  button.textContent="SYNCING...";
 
-      id = id.replace(/^D/, "");
-
-      if (!/^\d+$/.test(id)) {
-        return "";
-      }
-
-      return "D" + id.padStart(5, "0");
-    }
-
-
-    function lookupCard() {
-      const input =
-        document.getElementById("dittoId").value;
-
-      const id = normalizeDittoId(input);
-
-      if (!id) {
-        alert("Enter a valid Ditto ID.");
-        return;
-      }
-
-      const inventory =
-        localStorage.getItem("dittoInventory");
-
-      if (!inventory) {
-        alert(
-          "No offline inventory has been synced to this phone yet."
+  window.dittoReceiveInventory=function(payload){
+    try{
+      if(!payload || !payload.ok || !payload.cards){
+        throw new Error(
+          payload && payload.error
+            ? payload.error
+            : "Invalid inventory response."
         );
-        return;
-      }
-
-      let cards;
-
-      try {
-        cards = JSON.parse(inventory);
-      } catch (error) {
-        alert("The offline inventory could not be read.");
-        return;
-      }
-
-      if (!cards[id]) {
-        alert(
-          id +
-          " is not in the offline inventory on this phone."
-        );
-        return;
       }
 
       localStorage.setItem(
-        "dittoCurrentCard",
-        JSON.stringify(cards[id])
+        "dittoInventory",
+        JSON.stringify(payload.cards)
       );
 
       localStorage.setItem(
-        "dittoCurrentId",
-        id
+        "dittoLastSync",
+        payload.syncedAt || new Date().toISOString()
       );
 
-      alert(
-        id +
-        " found offline.\n\n" +
-        "Card display is coming in the next step."
-      );
+      updateInventory();
+
+      alert(payload.count+" cards synced to this device.");
+
+    }catch(err){
+      alert("Ditto sync failed: "+err.message);
+
+    }finally{
+      button.disabled=false;
+      button.textContent="↻ SYNC INVENTORY";
+
+      const old=document.getElementById("syncLoader");
+      if(old) old.remove();
     }
+  };
+
+  const script=document.createElement("script");
+  script.id="syncLoader";
+
+  script.onerror=function(){
+    button.disabled=false;
+    button.textContent="↻ SYNC INVENTORY";
+
+    const old=document.getElementById("syncLoader");
+    if(old) old.remove();
+
+    alert("Could not reach Ditto Offline Sync.");
+  };
+
+  script.src=
+    SYNC_URL+
+    "?callback=dittoReceiveInventory&t="+
+    Date.now();
+
+  document.body.appendChild(script);
+}
 
 
-    function scanCard() {
-      alert(
-        "Camera scanner is not connected yet.\n\n" +
-        "We're building the offline foundation first."
-      );
-    }
+function scanCard(){
+  alert("QR scanner comes next. First we prove offline lookup.");
+}
 
 
-    function syncInventory() {
-      alert(
-        "Inventory sync is not connected yet.\n\n" +
-        "Next we will connect this button to Scan the Ditto V4."
-      );
-    }
+document
+  .getElementById("dittoId")
+  .addEventListener("keydown",function(e){
+    if(e.key==="Enter") lookupCard();
+  });
 
 
-    window.addEventListener(
-      "online",
-      updateConnectionStatus
-    );
+window.addEventListener("online",updateConnection);
+window.addEventListener("offline",updateConnection);
 
-    window.addEventListener(
-      "offline",
-      updateConnectionStatus
-    );
-
-
-    updateConnectionStatus();
-    updateInventoryStatus();
-
-  </script>
+updateConnection();
+updateInventory();
+</script>
 
 </body>
 </html>
