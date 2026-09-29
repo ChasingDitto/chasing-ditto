@@ -374,6 +374,7 @@ footer{
 </div>
 
 <script>
+
 const SYNC_URL =
   "https://script.google.com/macros/s/AKfycbyNRAIqNR_Hnupku-BTr-E272OcC-w45qRACcvUjDVha72KxZGU9aD4hqWc38QNuSwsFA/exec";
 
@@ -387,14 +388,22 @@ let scanLocked = false;
 ------------------------------------------------- */
 
 function updateConnection(){
-  const el = document.getElementById("connectionStatus");
+
+  const el =
+    document.getElementById("connectionStatus");
 
   if(navigator.onLine){
+
     el.textContent = "ONLINE";
     el.className = "status online";
+
   }else{
-    el.textContent = "OFFLINE — DITTO STILL LIVES";
-    el.className = "status offline";
+
+    el.textContent =
+      "OFFLINE — DITTO STILL LIVES";
+
+    el.className =
+      "status offline";
   }
 }
 
@@ -404,44 +413,69 @@ function updateConnection(){
 ------------------------------------------------- */
 
 function getInventory(){
+
   try{
+
     return JSON.parse(
-      localStorage.getItem("dittoInventory") || "{}"
+      localStorage.getItem("dittoInventory") ||
+      "{}"
     );
+
   }catch(err){
+
     return {};
   }
 }
 
 
 function updateInventory(){
-  const inventory = getInventory();
-  const count = Object.keys(inventory).length;
 
-  const countEl = document.getElementById("inventoryCount");
-  const timeEl = document.getElementById("inventoryTime");
+  const inventory =
+    getInventory();
+
+  const count =
+    Object.keys(inventory).length;
+
+  const countEl =
+    document.getElementById("inventoryCount");
+
+  const timeEl =
+    document.getElementById("inventoryTime");
+
 
   if(count){
+
     countEl.textContent =
-      count + " cards stored on this device";
+      count +
+      " cards stored on this device";
 
     const lastSync =
       localStorage.getItem("dittoLastSync");
 
+
     if(lastSync){
-      const date = new Date(lastSync);
+
+      const date =
+        new Date(lastSync);
 
       if(!isNaN(date.getTime())){
+
         timeEl.textContent =
-          "Last synced: " + date.toLocaleString();
+          "Last synced: " +
+          date.toLocaleString();
+
       }else{
+
         timeEl.textContent = "";
       }
+
     }else{
+
       timeEl.textContent = "";
     }
 
   }else{
+
     countEl.textContent =
       "No inventory synced yet";
 
@@ -457,11 +491,14 @@ function updateInventory(){
 function syncInventory(){
 
   if(!navigator.onLine){
+
     alert(
       "Reconnect to the internet before syncing."
     );
+
     return;
   }
+
 
   const button =
     document.getElementById("syncButton");
@@ -480,6 +517,7 @@ function syncInventory(){
           !payload.ok ||
           !payload.cards
         ){
+
           throw new Error(
             payload && payload.error
               ? payload.error
@@ -487,10 +525,12 @@ function syncInventory(){
           );
         }
 
+
         localStorage.setItem(
           "dittoInventory",
           JSON.stringify(payload.cards)
         );
+
 
         localStorage.setItem(
           "dittoLastSync",
@@ -498,12 +538,15 @@ function syncInventory(){
           new Date().toISOString()
         );
 
+
         updateInventory();
+
 
         alert(
           payload.count +
           " cards synced to this device."
         );
+
 
       }catch(err){
 
@@ -512,14 +555,19 @@ function syncInventory(){
           err.message
         );
 
+
       }finally{
 
         button.disabled = false;
+
         button.textContent =
           "↻ SYNC INVENTORY";
 
+
         const old =
-          document.getElementById("syncLoader");
+          document.getElementById(
+            "syncLoader"
+          );
 
         if(old){
           old.remove();
@@ -529,7 +577,9 @@ function syncInventory(){
 
 
   const old =
-    document.getElementById("syncLoader");
+    document.getElementById(
+      "syncLoader"
+    );
 
   if(old){
     old.remove();
@@ -539,27 +589,33 @@ function syncInventory(){
   const script =
     document.createElement("script");
 
-  script.id = "syncLoader";
+  script.id =
+    "syncLoader";
 
 
-  script.onerror = function(){
+  script.onerror =
+    function(){
 
-    button.disabled = false;
+      button.disabled = false;
 
-    button.textContent =
-      "↻ SYNC INVENTORY";
+      button.textContent =
+        "↻ SYNC INVENTORY";
 
-    const old =
-      document.getElementById("syncLoader");
 
-    if(old){
-      old.remove();
-    }
+      const old =
+        document.getElementById(
+          "syncLoader"
+        );
 
-    alert(
-      "Could not reach Ditto Offline Sync."
-    );
-  };
+      if(old){
+        old.remove();
+      }
+
+
+      alert(
+        "Could not reach Ditto Offline Sync."
+      );
+    };
 
 
   script.src =
@@ -582,32 +638,27 @@ function normalizeDittoId(value){
     return "";
   }
 
+
   let text =
     String(value)
       .trim()
       .toUpperCase();
 
 
-  /*
-    QR labels currently point to URLs like:
-
-    https://chasingditto.github.io/chasing-ditto/go.html?id=D00001
-
-    This extracts the permanent Ditto ID from either:
-    - a URL
-    - plain D00001 text
-  */
-
   const match =
     text.match(/D\d{5,}/i);
 
+
   if(match){
+
     return match[0].toUpperCase();
   }
 
 
   if(/^\d+$/.test(text)){
-    return "D" + text.padStart(5,"0");
+
+    return "D" +
+      text.padStart(5,"0");
   }
 
 
@@ -626,6 +677,7 @@ function manualLookup(){
       .getElementById("manualId")
       .value;
 
+
   lookupCard(
     normalizeDittoId(value)
   );
@@ -640,16 +692,20 @@ function lookupCard(id){
 
   clearMessage();
 
+
   if(!id){
+
     showMessage(
       "Enter or scan a Ditto ID."
     );
+
     return;
   }
 
 
   const inventory =
     getInventory();
+
 
   const card =
     inventory[id];
@@ -663,9 +719,11 @@ function lookupCard(id){
       "Sync inventory while online if this card was added recently."
     );
 
+
     document
       .getElementById("cardResult")
       .innerHTML = "";
+
 
     return;
   }
@@ -687,18 +745,23 @@ function lookupCard(id){
 function renderCard(card){
 
   const result =
-    document.getElementById("cardResult");
+    document.getElementById(
+      "cardResult"
+    );
 
 
   const physical =
     card.itemType &&
-    String(card.itemType).toLowerCase() === "graded"
+    String(card.itemType)
+      .toLowerCase() === "graded"
+
       ? [
           card.grader,
           card.grade
         ]
           .filter(Boolean)
           .join(" ")
+
       : "Raw";
 
 
@@ -726,7 +789,9 @@ function renderCard(card){
 
   const tcg =
     positiveMoney(card.tcgRef)
+
       ? money(card.tcgRef)
+
       : (
           card.tcgRef
             ? escapeHtml(card.tcgRef)
@@ -754,9 +819,11 @@ function renderCard(card){
 
 
   result.innerHTML = `
+
     <div class="card">
 
       <div class="card-top">
+
         <div class="id-pill">
           ${escapeHtml(card.id || "")}
         </div>
@@ -764,19 +831,27 @@ function renderCard(card){
         <div class="card-status">
           ${escapeHtml(card.status || "")}
         </div>
+
       </div>
 
+
       <div class="card-name">
-        ${escapeHtml(card.name || "Unknown Card")}
+        ${escapeHtml(
+          card.name ||
+          "Unknown Card"
+        )}
       </div>
+
 
       <div class="card-set">
         ${escapeHtml(setLine)}
       </div>
 
+
       <div class="card-meta">
         ${escapeHtml(metaLine)}
       </div>
+
 
       <div class="physical">
 
@@ -789,13 +864,17 @@ function renderCard(card){
         </div>
 
         <div class="physical-sub">
+
           Condition:
+
           <strong>
             ${escapeHtml(condition)}
           </strong>
+
         </div>
 
       </div>
+
 
       <div class="price-box">
 
@@ -809,37 +888,50 @@ function renderCard(card){
 
       </div>
 
+
       <div class="market-title">
         MARKET REFERENCES
       </div>
 
+
       <div class="market-grid">
 
         <div class="market">
+
           <div class="market-name">
             COLLECTR
           </div>
+
           <div class="market-value">
             ${escapeHtml(collectr)}
           </div>
+
         </div>
 
+
         <div class="market">
+
           <div class="market-name">
             PRICECHARTING
           </div>
+
           <div class="market-value">
             ${escapeHtml(pc)}
           </div>
+
         </div>
 
+
         <div class="market">
+
           <div class="market-name">
             TCGPLAYER
           </div>
+
           <div class="market-value">
             ${tcg}
           </div>
+
         </div>
 
       </div>
@@ -865,7 +957,8 @@ async function startScanner(){
 
 
   if(
-    typeof Html5Qrcode === "undefined"
+    typeof Html5Qrcode ===
+    "undefined"
   ){
 
     showMessage(
@@ -885,9 +978,14 @@ async function startScanner(){
 
 
   const box =
-    document.getElementById("scannerBox");
+    document.getElementById(
+      "scannerBox"
+    );
 
-  box.classList.remove("hidden");
+
+  box.classList.remove(
+    "hidden"
+  );
 
 
   document
@@ -896,7 +994,9 @@ async function startScanner(){
 
 
   qrScanner =
-    new Html5Qrcode("reader");
+    new Html5Qrcode(
+      "reader"
+    );
 
 
   try{
@@ -904,11 +1004,13 @@ async function startScanner(){
     await qrScanner.start(
 
       {
-        facingMode:"environment"
+        facingMode:
+          "environment"
       },
 
       {
         fps:10,
+
         qrbox:{
           width:250,
           height:250
@@ -919,9 +1021,8 @@ async function startScanner(){
 
       function(){
         /*
-          QR misses are normal while the
-          camera is searching.
-          We intentionally ignore them.
+          QR misses are normal while
+          the camera searches.
         */
       }
     );
@@ -934,11 +1035,15 @@ async function startScanner(){
 
     scannerRunning = false;
 
+
     document
       .getElementById("scanButton")
       .disabled = false;
 
-    box.classList.add("hidden");
+
+    box.classList.add(
+      "hidden"
+    );
 
 
     showMessage(
@@ -952,7 +1057,9 @@ async function startScanner(){
 }
 
 
-async function onScanSuccess(decodedText){
+async function onScanSuccess(
+  decodedText
+){
 
   if(scanLocked){
     return;
@@ -963,16 +1070,20 @@ async function onScanSuccess(decodedText){
 
 
   const id =
-    normalizeDittoId(decodedText);
+    normalizeDittoId(
+      decodedText
+    );
 
 
   if(!/^D\d{5,}$/.test(id)){
 
     scanLocked = false;
 
+
     showMessage(
       "That QR code does not contain a Ditto ID."
     );
+
 
     return;
   }
@@ -988,10 +1099,15 @@ async function onScanSuccess(decodedText){
 async function stopScanner(){
 
   const box =
-    document.getElementById("scannerBox");
+    document.getElementById(
+      "scannerBox"
+    );
+
 
   const scanButton =
-    document.getElementById("scanButton");
+    document.getElementById(
+      "scanButton"
+    );
 
 
   if(
@@ -1000,7 +1116,9 @@ async function stopScanner(){
   ){
 
     try{
+
       await qrScanner.stop();
+
     }catch(err){
       /*
         Safe to ignore.
@@ -1012,7 +1130,9 @@ async function stopScanner(){
   if(qrScanner){
 
     try{
+
       qrScanner.clear();
+
     }catch(err){
       /*
         Safe to ignore.
@@ -1022,11 +1142,16 @@ async function stopScanner(){
 
 
   qrScanner = null;
+
   scannerRunning = false;
+
   scanLocked = false;
 
 
-  box.classList.add("hidden");
+  box.classList.add(
+    "hidden"
+  );
+
 
   scanButton.disabled = false;
 }
@@ -1041,6 +1166,7 @@ function positiveMoney(value){
   const n =
     Number(value);
 
+
   return (
     Number.isFinite(n) &&
     n > 0
@@ -1053,16 +1179,20 @@ function money(value){
   const n =
     Number(value);
 
+
   if(
     !Number.isFinite(n) ||
     n <= 0
   ){
+
     return "—";
   }
 
 
   return n.toLocaleString(
+
     "en-US",
+
     {
       style:"currency",
       currency:"USD",
@@ -1076,8 +1206,11 @@ function money(value){
 function escapeHtml(value){
 
   return String(
-    value == null ? "" : value
+    value == null
+      ? ""
+      : value
   )
+
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
@@ -1091,6 +1224,7 @@ function showMessage(text){
   document
     .getElementById("message")
     .innerHTML =
+
       '<div class="error">' +
       escapeHtml(text) +
       '</div>';
@@ -1112,10 +1246,13 @@ function clearMessage(){
 document
   .getElementById("manualId")
   .addEventListener(
+
     "keydown",
+
     function(event){
 
       if(event.key === "Enter"){
+
         manualLookup();
       }
     }
@@ -1135,19 +1272,51 @@ window.addEventListener(
 
 
 window.addEventListener(
+
   "pagehide",
+
   function(){
 
     if(
       qrScanner &&
       scannerRunning
     ){
-      qrScanner.stop().catch(
-        function(){}
-      );
+
+      qrScanner
+        .stop()
+        .catch(
+          function(){}
+        );
     }
   }
 );
+
+
+/* -------------------------------------------------
+   SERVICE WORKER
+------------------------------------------------- */
+
+if("serviceWorker" in navigator){
+
+  window.addEventListener(
+    "load",
+    function(){
+
+      navigator.serviceWorker
+        .register("./sw.js")
+
+        .catch(
+          function(err){
+
+            console.error(
+              "Ditto service worker registration failed:",
+              err
+            );
+          }
+        );
+    }
+  );
+}
 
 
 /* -------------------------------------------------
