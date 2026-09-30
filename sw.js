@@ -1,4 +1,4 @@
-const CACHE_NAME = "ditto-offline-v2";
+const CACHE_NAME = "ditto-offline-v3";
 
 const APP_FILES = [
   "./offline.html",
@@ -39,14 +39,6 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request)
       .then(cached => {
-        if (cached) {
-          return cached;
-        }
-
-        return fetch(event.request);
-      })
-  );
-});      .then(cached => {
         if (cached) {
           return cached;
         }
