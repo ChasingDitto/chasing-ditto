@@ -1,8 +1,12 @@
-const CACHE_NAME = "ditto-offline-v1";
+const CACHE_NAME = "ditto-offline-v2";
 
 const APP_FILES = [
   "./offline.html",
-  "./html5-qrcode.min.js"
+  "./html5-qrcode.min.js",
+  "./manifest.json",
+  "./dittoos-192.png",
+  "./dittoos-512.png",
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {
@@ -35,6 +39,14 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request)
       .then(cached => {
+        if (cached) {
+          return cached;
+        }
+
+        return fetch(event.request);
+      })
+  );
+});      .then(cached => {
         if (cached) {
           return cached;
         }
