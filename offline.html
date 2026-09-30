@@ -87,9 +87,23 @@ h1{
 }
 
 .inventory-time{
-  margin-top:5px;
-  color:#888;
-  font-size:13px;
+  margin-top:12px;
+  padding:12px 14px;
+  background:#111;
+  border-radius:12px;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.inventory-time-label{
+  display:block;
+  color:#6fd0f4;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:1px;
+  margin-bottom:4px;
 }
 
 button{
@@ -468,9 +482,32 @@ function updateInventory(){
 
       if(!isNaN(date.getTime())){
 
-        timeEl.textContent =
-          "Last synced: " +
-          date.toLocaleString();
+        const dateText =
+          date.toLocaleDateString(
+            "en-US",
+            {
+              month:"short",
+              day:"numeric",
+              year:"numeric"
+            }
+          );
+
+        const timeText =
+          date.toLocaleTimeString(
+            "en-US",
+            {
+              hour:"numeric",
+              minute:"2-digit"
+            }
+          );
+
+        timeEl.innerHTML =
+          '<span class="inventory-time-label">LAST SYNCED</span>' +
+          escapeHtml(
+            dateText +
+            " · " +
+            timeText
+          );
 
       }else{
 
