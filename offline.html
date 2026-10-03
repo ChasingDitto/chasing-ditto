@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <title>Scan the Ditto Offline</title>
 
 <link rel="manifest" href="./manifest.json">
@@ -16,7 +17,10 @@
 <script src="./html5-qrcode.min.js"></script>
 
 <style>
-*{box-sizing:border-box}
+
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -256,15 +260,16 @@ input{
 .price-label{
   font-size:12px;
   letter-spacing:1px;
+  font-weight:900;
 }
 
 .price-value{
-  font-size:28px;
+  font-size:34px;
   font-weight:900;
   margin-top:6px;
 }
 
-.market-title{
+.reference-title{
   margin-top:20px;
   margin-bottom:10px;
   color:#6fd0f4;
@@ -272,30 +277,62 @@ input{
   font-weight:900;
 }
 
-.market-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-}
-
-.market{
+.reference-box{
   background:#111;
-  border-radius:11px;
-  padding:10px;
-  min-width:0;
+  border-radius:12px;
+  padding:14px;
 }
 
-.market-name{
+.reference-name{
   color:#6fd0f4;
   font-size:10px;
   font-weight:900;
+  letter-spacing:.5px;
 }
 
-.market-value{
-  font-size:17px;
+.reference-value{
+  font-size:22px;
   font-weight:900;
   margin-top:5px;
-  overflow-wrap:anywhere;
+}
+
+.research-title{
+  margin-top:20px;
+  margin-bottom:10px;
+  color:#6fd0f4;
+  font-size:13px;
+  font-weight:900;
+}
+
+.research-box{
+  background:#111;
+  border-radius:12px;
+  padding:14px;
+}
+
+.pricecharting-button{
+  display:block;
+  width:100%;
+  text-decoration:none;
+  text-align:center;
+  background:#63a6c7;
+  color:#111;
+  border-radius:12px;
+  padding:16px;
+  font-size:17px;
+  font-weight:900;
+}
+
+.pricecharting-button:active{
+  opacity:.8;
+}
+
+.research-help{
+  color:#888;
+  font-size:12px;
+  line-height:1.4;
+  margin-top:10px;
+  text-align:center;
 }
 
 .error{
@@ -317,11 +354,19 @@ footer{
 }
 
 @media(max-width:420px){
-  body{padding:14px}
-  .market-grid{grid-template-columns:1fr}
-  .card-name{font-size:25px}
+
+  body{
+    padding:14px;
+  }
+
+  .card-name{
+    font-size:25px;
+  }
+
 }
+
 </style>
+
 </head>
 
 <body>
@@ -329,32 +374,79 @@ footer{
 <div class="app">
 
   <div class="logo">🔴</div>
-  <h1>SCAN THE DITTO</h1>
-  <div class="subtitle">Offline Card Lookup</div>
 
-  <div class="box">
-    <div class="label">CONNECTION</div>
-    <div id="connectionStatus" class="status">CHECKING...</div>
+  <h1>
+    SCAN THE DITTO
+  </h1>
+
+  <div class="subtitle">
+    Offline Card Lookup
   </div>
 
+
   <div class="box">
-    <div class="label">OFFLINE INVENTORY</div>
-    <div id="inventoryCount" class="inventory-count">
+
+    <div class="label">
+      CONNECTION
+    </div>
+
+    <div
+      id="connectionStatus"
+      class="status"
+    >
+      CHECKING...
+    </div>
+
+  </div>
+
+
+  <div class="box">
+
+    <div class="label">
+      OFFLINE INVENTORY
+    </div>
+
+    <div
+      id="inventoryCount"
+      class="inventory-count"
+    >
       No inventory synced yet
     </div>
-    <div id="inventoryTime" class="inventory-time"></div>
+
+    <div
+      id="inventoryTime"
+      class="inventory-time"
+    ></div>
+
   </div>
 
-  <button class="scan-button" id="scanButton" onclick="startScanner()">
+
+  <button
+    class="scan-button"
+    id="scanButton"
+    onclick="startScanner()"
+  >
     📷 SCAN CARD
   </button>
 
-  <button class="sync-button" id="syncButton" onclick="syncInventory()">
+
+  <button
+    class="sync-button"
+    id="syncButton"
+    onclick="syncInventory()"
+  >
     ↻ SYNC INVENTORY
   </button>
 
-  <div id="scannerBox" class="scanner-box hidden">
-    <div class="scanner-title">DITTO QR SCANNER</div>
+
+  <div
+    id="scannerBox"
+    class="scanner-box hidden"
+  >
+
+    <div class="scanner-title">
+      DITTO QR SCANNER
+    </div>
 
     <div id="reader"></div>
 
@@ -363,13 +455,21 @@ footer{
       The card will be looked up from inventory stored on this device.
     </div>
 
-    <button class="cancel-button" onclick="stopScanner()">
+    <button
+      class="cancel-button"
+      onclick="stopScanner()"
+    >
       CANCEL SCANNER
     </button>
+
   </div>
 
+
   <div class="lookup">
-    <div class="label">MANUAL DITTO ID</div>
+
+    <div class="label">
+      MANUAL DITTO ID
+    </div>
 
     <input
       id="manualId"
@@ -380,44 +480,72 @@ footer{
       spellcheck="false"
     >
 
-    <button class="lookup-button" onclick="manualLookup()">
+    <button
+      class="lookup-button"
+      onclick="manualLookup()"
+    >
       LOOK UP CARD
     </button>
+
   </div>
 
+
   <div id="message"></div>
+
   <div id="cardResult"></div>
 
+
   <footer>
-    Chasing Ditto<br>
-    Market sources inform the price. Ditto sets the price.
+    Chasing Ditto
+    <br>
+    Collectr identifies it. Ditto remembers it.
+    <br>
+    Shawn prices it. PriceCharting is the research desk.
   </footer>
 
 </div>
 
+
 <script>
+
 
 const SYNC_URL =
   "https://script.google.com/macros/s/AKfycbyNRAIqNR_Hnupku-BTr-E272OcC-w45qRACcvUjDVha72KxZGU9aD4hqWc38QNuSwsFA/exec";
 
+
+const PRICECHARTING_SEARCH_URL =
+  "https://www.pricecharting.com/search-products";
+
+
 let qrScanner = null;
+
 let scannerRunning = false;
+
 let scanLocked = false;
 
 
-/* -------------------------------------------------
-   CONNECTION
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ CONNECTION
+-------------------------------------------------------------
+*/
+
 
 function updateConnection(){
 
   const el =
-    document.getElementById("connectionStatus");
+    document.getElementById(
+      "connectionStatus"
+    );
+
 
   if(navigator.onLine){
 
-    el.textContent = "ONLINE";
-    el.className = "status online";
+    el.textContent =
+      "ONLINE";
+
+    el.className =
+      "status online";
 
   }else{
 
@@ -426,27 +554,35 @@ function updateConnection(){
 
     el.className =
       "status offline";
+
   }
+
 }
 
 
-/* -------------------------------------------------
-   LOCAL INVENTORY
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ LOCAL INVENTORY
+-------------------------------------------------------------
+*/
+
 
 function getInventory(){
 
   try{
 
     return JSON.parse(
-      localStorage.getItem("dittoInventory") ||
-      "{}"
+      localStorage.getItem(
+        "dittoInventory"
+      ) || "{}"
     );
 
   }catch(err){
 
     return {};
+
   }
+
 }
 
 
@@ -455,14 +591,23 @@ function updateInventory(){
   const inventory =
     getInventory();
 
+
   const count =
-    Object.keys(inventory).length;
+    Object.keys(
+      inventory
+    ).length;
+
 
   const countEl =
-    document.getElementById("inventoryCount");
+    document.getElementById(
+      "inventoryCount"
+    );
+
 
   const timeEl =
-    document.getElementById("inventoryTime");
+    document.getElementById(
+      "inventoryTime"
+    );
 
 
   if(count){
@@ -471,16 +616,26 @@ function updateInventory(){
       count +
       " cards stored on this device";
 
+
     const lastSync =
-      localStorage.getItem("dittoLastSync");
+      localStorage.getItem(
+        "dittoLastSync"
+      );
 
 
     if(lastSync){
 
       const date =
-        new Date(lastSync);
+        new Date(
+          lastSync
+        );
 
-      if(!isNaN(date.getTime())){
+
+      if(
+        !isNaN(
+          date.getTime()
+        )
+      ){
 
         const dateText =
           date.toLocaleDateString(
@@ -492,6 +647,7 @@ function updateInventory(){
             }
           );
 
+
         const timeText =
           date.toLocaleTimeString(
             "en-US",
@@ -500,6 +656,7 @@ function updateInventory(){
               minute:"2-digit"
             }
           );
+
 
         timeEl.innerHTML =
           '<span class="inventory-time-label">LAST SYNCED</span>' +
@@ -511,12 +668,16 @@ function updateInventory(){
 
       }else{
 
-        timeEl.textContent = "";
+        timeEl.textContent =
+          "";
+
       }
 
     }else{
 
-      timeEl.textContent = "";
+      timeEl.textContent =
+        "";
+
     }
 
   }else{
@@ -524,14 +685,20 @@ function updateInventory(){
     countEl.textContent =
       "No inventory synced yet";
 
-    timeEl.textContent = "";
+    timeEl.textContent =
+      "";
+
   }
+
 }
 
 
-/* -------------------------------------------------
-   INVENTORY SYNC
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ INVENTORY SYNC
+-------------------------------------------------------------
+*/
+
 
 function syncInventory(){
 
@@ -542,14 +709,22 @@ function syncInventory(){
     );
 
     return;
+
   }
 
 
   const button =
-    document.getElementById("syncButton");
+    document.getElementById(
+      "syncButton"
+    );
 
-  button.disabled = true;
-  button.textContent = "SYNCING...";
+
+  button.disabled =
+    true;
+
+
+  button.textContent =
+    "SYNCING...";
 
 
   window.dittoReceiveInventory =
@@ -564,16 +739,20 @@ function syncInventory(){
         ){
 
           throw new Error(
-            payload && payload.error
+            payload &&
+            payload.error
               ? payload.error
               : "Invalid inventory response."
           );
+
         }
 
 
         localStorage.setItem(
           "dittoInventory",
-          JSON.stringify(payload.cards)
+          JSON.stringify(
+            payload.cards
+          )
         );
 
 
@@ -603,7 +782,9 @@ function syncInventory(){
 
       }finally{
 
-        button.disabled = false;
+        button.disabled =
+          false;
+
 
         button.textContent =
           "↻ SYNC INVENTORY";
@@ -614,10 +795,15 @@ function syncInventory(){
             "syncLoader"
           );
 
+
         if(old){
+
           old.remove();
+
         }
+
       }
+
     };
 
 
@@ -626,13 +812,19 @@ function syncInventory(){
       "syncLoader"
     );
 
+
   if(old){
+
     old.remove();
+
   }
 
 
   const script =
-    document.createElement("script");
+    document.createElement(
+      "script"
+    );
+
 
   script.id =
     "syncLoader";
@@ -641,7 +833,9 @@ function syncInventory(){
   script.onerror =
     function(){
 
-      button.disabled = false;
+      button.disabled =
+        false;
+
 
       button.textContent =
         "↻ SYNC INVENTORY";
@@ -652,14 +846,18 @@ function syncInventory(){
           "syncLoader"
         );
 
+
       if(old){
+
         old.remove();
+
       }
 
 
       alert(
         "Could not reach Ditto Offline Sync."
       );
+
     };
 
 
@@ -669,18 +867,26 @@ function syncInventory(){
     Date.now();
 
 
-  document.body.appendChild(script);
+  document.body.appendChild(
+    script
+  );
+
 }
 
 
-/* -------------------------------------------------
-   DITTO ID NORMALIZATION
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ DITTO ID NORMALIZATION
+-------------------------------------------------------------
+*/
+
 
 function normalizeDittoId(value){
 
   if(!value){
+
     return "";
+
   }
 
 
@@ -691,47 +897,71 @@ function normalizeDittoId(value){
 
 
   const match =
-    text.match(/D\d{5,}/i);
+    text.match(
+      /D\d{5,}/i
+    );
 
 
   if(match){
 
-    return match[0].toUpperCase();
+    return match[0]
+      .toUpperCase();
+
   }
 
 
-  if(/^\d+$/.test(text)){
+  if(
+    /^\d+$/.test(
+      text
+    )
+  ){
 
     return "D" +
-      text.padStart(5,"0");
+      text.padStart(
+        5,
+        "0"
+      );
+
   }
 
 
   return text;
+
 }
 
 
-/* -------------------------------------------------
-   MANUAL LOOKUP
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ MANUAL LOOKUP
+-------------------------------------------------------------
+*/
+
 
 function manualLookup(){
 
   const value =
     document
-      .getElementById("manualId")
+      .getElementById(
+        "manualId"
+      )
       .value;
 
 
   lookupCard(
-    normalizeDittoId(value)
+    normalizeDittoId(
+      value
+    )
   );
+
 }
 
 
-/* -------------------------------------------------
-   CARD LOOKUP
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ CARD LOOKUP
+-------------------------------------------------------------
+*/
+
 
 function lookupCard(id){
 
@@ -745,6 +975,7 @@ function lookupCard(id){
     );
 
     return;
+
   }
 
 
@@ -766,26 +997,109 @@ function lookupCard(id){
 
 
     document
-      .getElementById("cardResult")
-      .innerHTML = "";
+      .getElementById(
+        "cardResult"
+      )
+      .innerHTML =
+        "";
 
 
     return;
+
   }
 
 
   document
-    .getElementById("manualId")
-    .value = id;
+    .getElementById(
+      "manualId"
+    )
+    .value =
+      id;
 
 
-  renderCard(card);
+  renderCard(
+    card
+  );
+
 }
 
 
-/* -------------------------------------------------
-   CARD DISPLAY
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ PRICECHARTING RESEARCH LINK
+-------------------------------------------------------------
+*/
+
+
+function buildPriceChartingUrl(card){
+
+  /*
+   Deliberately use a SEARCH instead of automatically
+   choosing a PriceCharting record.
+
+   Shawn gets the candidate list and chooses the correct
+   variant himself.
+
+   Search identity:
+
+   Card Name
+   Set
+   Card Number
+   Language
+  */
+
+
+  const parts =
+    [
+      card.name,
+      card.set,
+      card.number,
+      card.language
+    ]
+      .map(
+        function(value){
+
+          return String(
+            value || ""
+          ).trim();
+
+        }
+      )
+      .filter(
+        function(value){
+
+          return Boolean(
+            value
+          );
+
+        }
+      );
+
+
+  const query =
+    parts.join(
+      " "
+    );
+
+
+  return (
+    PRICECHARTING_SEARCH_URL +
+    "?q=" +
+    encodeURIComponent(
+      query
+    ) +
+    "&type=prices"
+  );
+
+}
+
+
+/*
+-------------------------------------------------------------
+ CARD DISPLAY
+-------------------------------------------------------------
+*/
+
 
 function renderCard(card){
 
@@ -797,51 +1111,53 @@ function renderCard(card){
 
   const physical =
     card.itemType &&
-    String(card.itemType)
-      .toLowerCase() === "graded"
+    String(
+      card.itemType
+    )
+      .toLowerCase() ===
+      "graded"
 
       ? [
           card.grader,
           card.grade
         ]
-          .filter(Boolean)
-          .join(" ")
+          .filter(
+            Boolean
+          )
+          .join(
+            " "
+          )
 
       : "Raw";
 
 
   const condition =
-    card.condition || "—";
+    card.condition ||
+    "—";
 
 
   const ask =
-    positiveMoney(card.ask)
-      ? money(card.ask)
+    positiveMoney(
+      card.ask
+    )
+
+      ? money(
+          card.ask
+        )
+
       : "NOT PRICED YET";
 
 
   const collectr =
-    positiveMoney(card.collectr)
-      ? money(card.collectr)
+    positiveMoney(
+      card.collectr
+    )
+
+      ? money(
+          card.collectr
+        )
+
       : "—";
-
-
-  const pc =
-    positiveMoney(card.pcReference)
-      ? money(card.pcReference)
-      : "—";
-
-
-  const tcg =
-    positiveMoney(card.tcgRef)
-
-      ? money(card.tcgRef)
-
-      : (
-          card.tcgRef
-            ? escapeHtml(card.tcgRef)
-            : "—"
-        );
 
 
   const setLine =
@@ -849,8 +1165,12 @@ function renderCard(card){
       card.set,
       card.number
     ]
-      .filter(Boolean)
-      .join(" · ");
+      .filter(
+        Boolean
+      )
+      .join(
+        " · "
+      );
 
 
   const metaLine =
@@ -859,8 +1179,18 @@ function renderCard(card){
       card.language,
       card.variant
     ]
-      .filter(Boolean)
-      .join(" · ");
+      .filter(
+        Boolean
+      )
+      .join(
+        " · "
+      );
+
+
+  const priceChartingUrl =
+    buildPriceChartingUrl(
+      card
+    );
 
 
   result.innerHTML = `
@@ -870,31 +1200,45 @@ function renderCard(card){
       <div class="card-top">
 
         <div class="id-pill">
-          ${escapeHtml(card.id || "")}
+          ${escapeHtml(
+            card.id || ""
+          )}
         </div>
 
         <div class="card-status">
-          ${escapeHtml(card.status || "")}
+          ${escapeHtml(
+            card.status || ""
+          )}
         </div>
 
       </div>
 
 
       <div class="card-name">
+
         ${escapeHtml(
           card.name ||
           "Unknown Card"
         )}
+
       </div>
 
 
       <div class="card-set">
-        ${escapeHtml(setLine)}
+
+        ${escapeHtml(
+          setLine
+        )}
+
       </div>
 
 
       <div class="card-meta">
-        ${escapeHtml(metaLine)}
+
+        ${escapeHtml(
+          metaLine
+        )}
+
       </div>
 
 
@@ -905,7 +1249,11 @@ function renderCard(card){
         </div>
 
         <div class="physical-main">
-          ${escapeHtml(physical)}
+
+          ${escapeHtml(
+            physical
+          )}
+
         </div>
 
         <div class="physical-sub">
@@ -913,7 +1261,11 @@ function renderCard(card){
           Condition:
 
           <strong>
-            ${escapeHtml(condition)}
+
+            ${escapeHtml(
+              condition
+            )}
+
           </strong>
 
         </div>
@@ -924,77 +1276,89 @@ function renderCard(card){
       <div class="price-box">
 
         <div class="price-label">
-          DITTO PRICE
+          YOUR PRICE
         </div>
 
         <div class="price-value">
-          ${escapeHtml(ask)}
+
+          ${escapeHtml(
+            ask
+          )}
+
         </div>
 
       </div>
 
 
-      <div class="market-title">
-        MARKET REFERENCES
+      <div class="reference-title">
+        COLLECTR REFERENCE
       </div>
 
 
-      <div class="market-grid">
+      <div class="reference-box">
 
-        <div class="market">
+        <div class="reference-name">
+          COLLECTR
+        </div>
 
-          <div class="market-name">
-            COLLECTR
-          </div>
+        <div class="reference-value">
 
-          <div class="market-value">
-            ${escapeHtml(collectr)}
-          </div>
+          ${escapeHtml(
+            collectr
+          )}
 
         </div>
 
-
-        <div class="market">
-
-          <div class="market-name">
-            PRICECHARTING
-          </div>
-
-          <div class="market-value">
-            ${escapeHtml(pc)}
-          </div>
-
-        </div>
+      </div>
 
 
-        <div class="market">
+      <div class="research-title">
+        MARKET RESEARCH
+      </div>
 
-          <div class="market-name">
-            TCGPLAYER
-          </div>
 
-          <div class="market-value">
-            ${tcg}
-          </div>
+      <div class="research-box">
 
+        <a
+          class="pricecharting-button"
+          href="${escapeHtml(
+            priceChartingUrl
+          )}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          🔎 VIEW ON PRICECHARTING ↗
+        </a>
+
+        <div class="research-help">
+          Opens a PriceCharting search using this card's identity.
+          Choose the correct variant before using the market data.
+          Internet connection required.
         </div>
 
       </div>
 
     </div>
+
   `;
 
 
-  result.scrollIntoView({
-    behavior:"smooth",
-    block:"start"
-  });
+  result.scrollIntoView(
+    {
+      behavior:"smooth",
+      block:"start"
+    }
+  );
+
 }
 
 
-/* -------------------------------------------------
-   QR SCANNER
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ QR SCANNER
+-------------------------------------------------------------
+*/
+
 
 async function startScanner(){
 
@@ -1011,15 +1375,19 @@ async function startScanner(){
     );
 
     return;
+
   }
 
 
   if(scannerRunning){
+
     return;
+
   }
 
 
-  scanLocked = false;
+  scanLocked =
+    false;
 
 
   const box =
@@ -1034,8 +1402,11 @@ async function startScanner(){
 
 
   document
-    .getElementById("scanButton")
-    .disabled = true;
+    .getElementById(
+      "scanButton"
+    )
+    .disabled =
+      true;
 
 
   qrScanner =
@@ -1054,36 +1425,48 @@ async function startScanner(){
       },
 
       {
-        fps:10,
+        fps:
+          10,
 
         qrbox:{
-          width:250,
-          height:250
+          width:
+            250,
+
+          height:
+            250
         }
       },
 
       onScanSuccess,
 
       function(){
+
         /*
-          QR misses are normal while
-          the camera searches.
+         QR misses are normal while
+         the camera searches.
         */
+
       }
+
     );
 
 
-    scannerRunning = true;
+    scannerRunning =
+      true;
 
 
   }catch(err){
 
-    scannerRunning = false;
+    scannerRunning =
+      false;
 
 
     document
-      .getElementById("scanButton")
-      .disabled = false;
+      .getElementById(
+        "scanButton"
+      )
+      .disabled =
+        false;
 
 
     box.classList.add(
@@ -1097,8 +1480,11 @@ async function startScanner(){
     );
 
 
-    qrScanner = null;
+    qrScanner =
+      null;
+
   }
+
 }
 
 
@@ -1107,11 +1493,14 @@ async function onScanSuccess(
 ){
 
   if(scanLocked){
+
     return;
+
   }
 
 
-  scanLocked = true;
+  scanLocked =
+    true;
 
 
   const id =
@@ -1120,9 +1509,14 @@ async function onScanSuccess(
     );
 
 
-  if(!/^D\d{5,}$/.test(id)){
+  if(
+    !/^D\d{5,}$/.test(
+      id
+    )
+  ){
 
-    scanLocked = false;
+    scanLocked =
+      false;
 
 
     showMessage(
@@ -1131,13 +1525,17 @@ async function onScanSuccess(
 
 
     return;
+
   }
 
 
   await stopScanner();
 
 
-  lookupCard(id);
+  lookupCard(
+    id
+  );
+
 }
 
 
@@ -1165,10 +1563,13 @@ async function stopScanner(){
       await qrScanner.stop();
 
     }catch(err){
+
       /*
-        Safe to ignore.
+       Safe to ignore.
       */
+
     }
+
   }
 
 
@@ -1179,18 +1580,26 @@ async function stopScanner(){
       qrScanner.clear();
 
     }catch(err){
+
       /*
-        Safe to ignore.
+       Safe to ignore.
       */
+
     }
+
   }
 
 
-  qrScanner = null;
+  qrScanner =
+    null;
 
-  scannerRunning = false;
 
-  scanLocked = false;
+  scannerRunning =
+    false;
+
+
+  scanLocked =
+    false;
 
 
   box.classList.add(
@@ -1198,39 +1607,54 @@ async function stopScanner(){
   );
 
 
-  scanButton.disabled = false;
+  scanButton.disabled =
+    false;
+
 }
 
 
-/* -------------------------------------------------
-   HELPERS
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ HELPERS
+-------------------------------------------------------------
+*/
+
 
 function positiveMoney(value){
 
   const n =
-    Number(value);
+    Number(
+      value
+    );
 
 
   return (
-    Number.isFinite(n) &&
+    Number.isFinite(
+      n
+    ) &&
     n > 0
   );
+
 }
 
 
 function money(value){
 
   const n =
-    Number(value);
+    Number(
+      value
+    );
 
 
   if(
-    !Number.isFinite(n) ||
+    !Number.isFinite(
+      n
+    ) ||
     n <= 0
   ){
 
     return "—";
+
   }
 
 
@@ -1239,12 +1663,21 @@ function money(value){
     "en-US",
 
     {
-      style:"currency",
-      currency:"USD",
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
+      style:
+        "currency",
+
+      currency:
+        "USD",
+
+      minimumFractionDigits:
+        2,
+
+      maximumFractionDigits:
+        2
     }
+
   );
+
 }
 
 
@@ -1256,51 +1689,91 @@ function escapeHtml(value){
       : value
   )
 
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
 }
 
 
 function showMessage(text){
 
   document
-    .getElementById("message")
+    .getElementById(
+      "message"
+    )
     .innerHTML =
 
       '<div class="error">' +
-      escapeHtml(text) +
+      escapeHtml(
+        text
+      ) +
       '</div>';
+
 }
 
 
 function clearMessage(){
 
   document
-    .getElementById("message")
-    .innerHTML = "";
+    .getElementById(
+      "message"
+    )
+    .innerHTML =
+      "";
+
 }
 
 
-/* -------------------------------------------------
-   EVENTS
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ EVENTS
+-------------------------------------------------------------
+*/
+
 
 document
-  .getElementById("manualId")
+  .getElementById(
+    "manualId"
+  )
   .addEventListener(
 
     "keydown",
 
     function(event){
 
-      if(event.key === "Enter"){
+      if(
+        event.key ===
+        "Enter"
+      ){
 
         manualLookup();
+
       }
+
     }
+
   );
 
 
@@ -1332,23 +1805,37 @@ window.addEventListener(
         .catch(
           function(){}
         );
+
     }
+
   }
+
 );
 
 
-/* -------------------------------------------------
-   SERVICE WORKER
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ SERVICE WORKER
+-------------------------------------------------------------
+*/
 
-if("serviceWorker" in navigator){
+
+if(
+  "serviceWorker" in
+  navigator
+){
 
   window.addEventListener(
+
     "load",
+
     function(){
 
-      navigator.serviceWorker
-        .register("./sw.js")
+      navigator
+        .serviceWorker
+        .register(
+          "./sw.js"
+        )
 
         .catch(
           function(err){
@@ -1357,19 +1844,28 @@ if("serviceWorker" in navigator){
               "Ditto service worker registration failed:",
               err
             );
+
           }
         );
+
     }
+
   );
+
 }
 
 
-/* -------------------------------------------------
-   STARTUP
-------------------------------------------------- */
+/*
+-------------------------------------------------------------
+ STARTUP
+-------------------------------------------------------------
+*/
+
 
 updateConnection();
+
 updateInventory();
+
 
 </script>
 
